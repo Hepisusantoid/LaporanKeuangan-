@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Jika gagal (misalnya karena bin masih kosong), kembalikan data default
                 // agar aplikasi tidak error saat pertama kali dijalankan.
                 return {
-                    users: [{ username: 'admin', password: '123' }],
+                    users: [{ username: 'Hepi', password: '12345678' }],
                     transactions: []
                 };
             }
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Terjadi error saat fetchData:', error);
             // Fallback jika ada masalah jaringan
             return {
-                users: [{ username: 'admin', password: '123' }],
+                users: [{ username: 'Hepi', password: '12345678' }],
                 transactions: []
             };
         }
