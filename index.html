@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Keuangan</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <h1>Selamat Datang</h1>
+            <p>Masuk untuk melanjutkan</p>
+            <input type="text" id="username" placeholder="Username" autocomplete="username">
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+            <button id="login-button">Masuk</button>
+            <p id="login-error" class="error-message"></p>
+        </div>
+    </div>
+
+    <div id="main-app" class="screen">
+        <header>
+            <h1>Dashboard Keuangan</h1>
+            <button id="logout-button">Keluar</button>
+        </header>
+
+        <main>
+            <section class="summary-cards">
+                <div class="card">
+                    <h3>Total Pemasukan</h3>
+                    <p id="total-pemasukan">Rp 0</p>
+                </div>
+                <div class="card">
+                    <h3>Total Pengeluaran</h3>
+                    <p id="total-pengeluaran">Rp 0</p>
+                </div>
+                <div class="card">
+                    <h3>Saldo Akhir</h3>
+                    <p id="saldo-akhir">Rp 0</p>
+                </div>
+            </section>
+
+            <section class="actions">
+                <div class="filter-container">
+                    <label for="filter-bulan">Filter per Bulan:</label>
+                    <select id="filter-bulan">
+                        <option value="semua">Semua Bulan</option>
+                        </select>
+                </div>
+                <button id="add-transaction-btn">+ Tambah Transaksi</button>
+                 <button id="calculator-btn">🧮 Kalkulator</button>
+            </section>
+
+            <section class="chart-container">
+                <canvas id="finance-chart"></canvas>
+            </section>
+
+            <section class="transaction-list">
+                <h2>Riwayat Transaksi</h2>
+                <table id="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Keterangan</th>
+                            <th>Jenis</th>
+                            <th>Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Tambah Transaksi Baru</h2>
+            <form id="transaction-form">
+                <label for="trans-type">Jenis:</label>
+                <select id="trans-type" required>
+                    <option value="pemasukan">Pemasukan</option>
+                    <option value="pengeluaran">Pengeluaran</option>
+                </select>
+                <label for="trans-desc">Keterangan:</label>
+                <input type="text" id="trans-desc" placeholder="Contoh: Jasa Admin Digital" required>
+                <label for="trans-amount">Jumlah:</label>
+                <input type="number" id="trans-amount" placeholder="Contoh: 10000" required>
+                <label for="trans-date">Tanggal:</label>
+                <input type="date" id="trans-date" required>
+                <button type="submit">Simpan</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="calculator-modal" class="modal">
+        <div class="modal-content calculator">
+             <span class="close-calc-btn">&times;</span>
+             <h2>Kalkulator</h2>
+             <div class="calculator-display">
+                <input type="text" id="calc-display" disabled>
+             </div>
+             <div class="calculator-keys">
+                <button value="7">7</button>
+                <button value="8">8</button>
+                <button value="9">9</button>
+                <button class="operator" value="/">/</button>
+
+                <button value="4">4</button>
+                <button value="5">5</button>
+                <button value="6">6</button>
+                <button class="operator" value="*">*</button>
+
+                <button value="1">1</button>
+                <button value="2">2</button>
+                <button value="3">3</button>
+                <button class="operator" value="-">-</button>
+
+                <button value="0">0</button>
+                <button value=".">.</button>
+                <button id="calc-clear">C</button>
+                <button class="operator" value="+">+</button>
+                
+                <button class="equal-sign" id="calc-equals">=</button>
+             </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
