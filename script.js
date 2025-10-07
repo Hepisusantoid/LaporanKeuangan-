@@ -8,7 +8,6 @@ let state = { transactions: [] };
 let currentMonthFilter = 'ALL';
 
 // ====== Helper DOM/Format ======
-const fmtIDR = (n) => (n||0).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0});
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, attrs={}, kids=[]) => {
   const x = document.createElement(tag);
@@ -18,6 +17,37 @@ const el = (tag, attrs={}, kids=[]) => {
   kids.forEach(k => x.appendChild(k));
   return x;
 };
+const fmtIDR = (n) => (n||0).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0});
+
+// ==== Format ribuan saat mengetik (titik) ====
+// "12.345,67" -> 12345.67 (Number)
+function parseIDR(str){
+  if (!str) return 0;
+  const cleaned = String(str).replace(/\./g,'').replace(',', '.').replace(/[^\d.]/g,'');
+  const n = Number(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+// "12345.67" -> "12.345,67" (string)
+function formatThousandsInput(str){
+  str = String(str||'').replace(/[^\d,]/g,''); // hanya angka & koma
+  const parts = str.split(',');
+  let int = parts[0].replace(/^0+(?=\d)/,'');
+  int = int.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return parts.length>1 ? `${int},${parts[1].slice(0,2)}` : int;
+}
+function formatFromNumber(n){
+  // tampilkan 0 desimal (sesuai tampilan IDR di app)
+  return Math.round(n).toLocaleString('id-ID');
+}
+function attachThousandsMask(input){
+  input.addEventListener('input', ()=>{
+    const v = input.value;
+    input.value = formatThousandsInput(v);
+  });
+  input.addEventListener('focus', ()=> {
+    if (!input.value) input.value = '';
+  });
+}
 
 // ====== Auth UI ======
 function updateAuthUI() {
@@ -31,23 +61,15 @@ $('#btn-login')?.addEventListener('click', ()=> $('#screen-login').scrollIntoVie
 $('#do-login')?.addEventListener('click', async ()=>{
   const v = $('#pin').value.trim();
   if (v.length < 4) return alert('PIN minimal 4 digit');
-
   try {
-    const r = await fetch(LOGIN_API, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ pin: v })
-    });
-    const j = await r.json();
+    const r = await fetch(LOGIN_API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin: v }) });
+    const j = await r.json().catch(()=>({}));
     if (!r.ok) return alert(j.error || 'Login gagal');
     if (!j.ok) return alert('PIN salah');
-
-    localStorage.setItem(SESSION_KEY, 'ok');
+    localStorage.setItem(SESSION_KEY,'ok');
     updateAuthUI();
     loadData();
-  } catch (e) {
-    alert('Login gagal: ' + e.message);
-  }
+  } catch (e) { alert('Login gagal: ' + e.message); }
 });
 $('#btn-logout')?.addEventListener('click', ()=>{
   localStorage.removeItem(SESSION_KEY);
@@ -57,24 +79,29 @@ $('#btn-logout')?.addEventListener('click', ()=>{
 // ====== Data I/O ======
 async function getData() {
   const r = await fetch(API, { method:'GET' });
-  if (!r.ok) throw new Error('Gagal memuat data');
-  return r.json();
+  let j = {};
+  try { j = await r.json(); } catch {}
+  if (!r.ok) {
+    const msg = (j && j.error) ? j.error : `HTTP ${r.status}`;
+    throw new Error(msg);
+  }
+  return j;
 }
 async function addTx(tx) {
   const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
-  const j = await r.json();
+  const j = await r.json().catch(()=>({}));
   if (!r.ok) throw new Error(j.error || 'Gagal simpan');
   return j;
 }
 async function updateTx(tx) {
   const r = await fetch(API, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
-  const j = await r.json();
+  const j = await r.json().catch(()=>({}));
   if (!r.ok) throw new Error(j.error || 'Gagal update');
   return j;
 }
 async function deleteTx(id) {
   const r = await fetch(API, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id}) });
-  const j = await r.json();
+  const j = await r.json().catch(()=>({}));
   if (!r.ok) throw new Error(j.error || 'Gagal hapus');
   return j;
 }
@@ -101,6 +128,7 @@ function render(){
   $('#sum-out').textContent = fmtIDR(sumOut);
   $('#sum-balance').textContent = fmtIDR(balance);
 
+  // filter dropdown
   const months = listMonths(state.transactions);
   const sel = $('#filter-month');
   sel.innerHTML = '';
@@ -108,6 +136,7 @@ function render(){
   months.forEach(m => sel.appendChild(el('option',{value:m,text:toIndoMonth(m)})));
   sel.value = currentMonthFilter;
 
+  // table
   const tbody = $('#tbody');
   tbody.innerHTML = '';
   filtered.forEach(t=>{
@@ -128,6 +157,9 @@ function render(){
     ]);
     tbody.appendChild(tr);
   });
+
+  // charts + summary
+  updateAnalytics(filtered);
 }
 function btnSmall(txt, fn){ const b=el('button',{class:'btn',text:txt}); b.addEventListener('click',fn); return b;}
 function btnSmallDanger(txt, fn){ const b=el('button',{class:'btn danger',text:txt}); b.addEventListener('click',fn); return b;}
@@ -156,7 +188,7 @@ function openEdit(t){
   $('#tx-id').value = t.id;
   $('#tx-type').value = t.type;
   $('#tx-note').value = t.note || '';
-  $('#tx-amount').value = t.amount;
+  $('#tx-amount').value = formatFromNumber(t.amount); // tampil ribuan
   $('#tx-date').value = t.date;
   $('#form-error').hidden = true;
   dlg.showModal();
@@ -168,7 +200,7 @@ $('#form-tx')?.addEventListener('submit', async (e)=>{
     id: $('#tx-id').value || undefined,
     type: $('#tx-type').value,
     note: $('#tx-note').value,
-    amount: Number($('#tx-amount').value),
+    amount: parseIDR($('#tx-amount').value), // pastikan angka bersih
     date: $('#tx-date').value
   };
   if (!data.amount || data.amount <= 0) return showFormError('Jumlah harus lebih dari 0');
@@ -179,6 +211,9 @@ $('#form-tx')?.addEventListener('submit', async (e)=>{
   } catch (err) { showFormError(err.message); }
 });
 function showFormError(msg){ const e=$('#form-error'); e.textContent=msg; e.hidden=false; }
+
+// aktifkan masker ribuan untuk semua input.berclass=thousands
+attachThousandsMask($('#tx-amount'));
 
 // ====== Kalkulator ======
 const dlgCalc = $('#modal-calc');
@@ -199,6 +234,104 @@ $('#filter-month')?.addEventListener('change', (e)=>{
   currentMonthFilter = e.target.value;
   render();
 });
+
+// ====== Analitik (Chart.js) ======
+let chartBalance, chartMonthly, chartShare;
+Chart.defaults.color = '#e7f5ee';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.12)';
+
+function updateAnalytics(list){
+  // --- saldo kumulatif per hari ---
+  const byDate = {};
+  list.forEach(t=>{
+    const key = t.date;
+    const delta = (t.type==='Pemasukan'? +t.amount : -t.amount);
+    byDate[key] = (byDate[key]||0) + delta;
+  });
+  const dates = Object.keys(byDate).sort();
+  let run = 0;
+  const saldoSeries = dates.map(d=> (run += byDate[d]));
+  drawBalanceChart(dates, saldoSeries);
+
+  // --- pemasukan vs pengeluaran per bulan (pakai semua transaksi, bukan cuma filter? -> sesuai filter) ---
+  const byMonth = {};
+  list.forEach(t=>{
+    const m = monthKey(t.date);
+    if (!byMonth[m]) byMonth[m] = {in:0,out:0};
+    if (t.type==='Pemasukan') byMonth[m].in += t.amount; else byMonth[m].out += t.amount;
+  });
+  const months = Object.keys(byMonth).sort();
+  const ins = months.map(m=>byMonth[m].in);
+  const outs= months.map(m=>byMonth[m].out);
+  drawMonthlyChart(months.map(toIndoMonth), ins, outs);
+
+  // --- share total ---
+  const {sumIn, sumOut} = computeSums(list);
+  drawShareChart([sumIn, sumOut]);
+
+  // --- ringkasan tabel ---
+  const tbody = $('#summary-body');
+  tbody.innerHTML = '';
+  months.forEach(m=>{
+    const pemasukan = byMonth[m].in, pengeluaran = byMonth[m].out, saldo = pemasukan - pengeluaran;
+    const tr = el('tr',{},[
+      el('td',{text: toIndoMonth(m)}),
+      el('td',{class:'right', text: fmtIDR(pemasukan)}),
+      el('td',{class:'right', text: fmtIDR(pengeluaran)}),
+      el('td',{class:'right', text: fmtIDR(saldo)}),
+    ]);
+    tbody.appendChild(tr);
+  });
+}
+
+function drawBalanceChart(labels, data){
+  const ctx = $('#chartBalance');
+  chartBalance?.destroy();
+  chartBalance = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{
+      label:'Saldo kumulatif',
+      data,
+      tension:.25,
+      fill:true,
+      backgroundColor:'rgba(34,197,94,.15)',
+      borderColor:'#22c55e',
+      pointRadius:0
+    }]},
+    options:{
+      plugins:{ tooltip:{ callbacks:{ label: c=> fmtIDR(c.parsed.y) } } },
+      scales:{ y:{ ticks:{ callback:v=> (v).toLocaleString('id-ID') } } }
+    }
+  });
+}
+function drawMonthlyChart(labels, inData, outData){
+  const ctx = $('#chartMonthly');
+  chartMonthly?.destroy();
+  chartMonthly = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Pemasukan', data:inData, backgroundColor:'#22c55e' },
+        { label:'Pengeluaran', data:outData, backgroundColor:'#ff6b6b' }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{ tooltip:{ callbacks:{ label:c=> `${c.dataset.label}: ${fmtIDR(c.parsed.y)}` } } },
+      scales:{ y:{ ticks:{ callback:v=> (v).toLocaleString('id-ID') } } }
+    }
+  });
+}
+function drawShareChart(values){
+  const ctx = $('#chartShare');
+  chartShare?.destroy();
+  chartShare = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels:['Pemasukan','Pengeluaran'], datasets:[{ data:values, backgroundColor:['#22c55e','#ff6b6b'] }] },
+    options:{ plugins:{ tooltip:{ callbacks:{ label:c=> `${c.label}: ${fmtIDR(c.parsed)}` } } } }
+  });
+}
 
 // ====== Boot ======
 async function loadData() {
