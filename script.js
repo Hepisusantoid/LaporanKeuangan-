@@ -6,21 +6,20 @@ const SESSION_KEY = 'lapkeu_session';
 // ====== State ======
 let state = { transactions: [] };
 let currentMonthFilter = 'ALL';
-let reportPeriod = 'monthly'; // default tab
 
 // ====== Helper DOM/Format ======
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, attrs={}, kids=[]) => {
   const x = document.createElement(tag);
-  Object.entries(attrs).forEach(([k,v])=>{
+  Object.entries(attrs).forEach(([k,v]) => {
     if (k==='class') x.className=v; else if (k==='text') x.textContent=v; else x.setAttribute(k,v);
   });
-  kids.forEach(k=>x.appendChild(k));
+  kids.forEach(k => x.appendChild(k));
   return x;
 };
 const fmtIDR = (n) => (n||0).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0});
 
-// ==== Format ribuan saat mengetik ====
+// ====== Input ribuan (titik) ======
 function parseIDR(str){
   if (!str) return 0;
   const cleaned = String(str).replace(/\./g,'').replace(',', '.').replace(/[^\d.]/g,'');
@@ -41,7 +40,7 @@ function attachThousandsMask(input){
 }
 
 // ====== Auth UI ======
-function updateAuthUI(){
+function updateAuthUI() {
   const loggedIn = Boolean(localStorage.getItem(SESSION_KEY));
   $('#screen-login').classList.toggle('hidden', loggedIn);
   $('#screen-app').classList.toggle('hidden', !loggedIn);
@@ -51,142 +50,93 @@ function updateAuthUI(){
 $('#btn-login')?.addEventListener('click', ()=> $('#screen-login').scrollIntoView({behavior:'smooth'}));
 $('#do-login')?.addEventListener('click', async ()=>{
   const v = $('#pin').value.trim();
-  if (v.length < 4) return alert('PIN minimal 4 digit');
-  try{
-    const r = await fetch(LOGIN_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:v})});
+  if (!v) return alert('Masukkan PIN');
+  try {
+    const r = await fetch(LOGIN_API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin: v }) });
     const j = await r.json().catch(()=>({}));
     if (!r.ok) return alert(j.error || 'Login gagal');
     if (!j.ok) return alert('PIN salah');
     localStorage.setItem(SESSION_KEY,'ok');
     updateAuthUI(); loadData();
-  }catch(e){ alert('Login gagal: '+e.message); }
+  } catch (e) { alert('Login gagal: ' + e.message); }
 });
 $('#btn-logout')?.addEventListener('click', ()=>{ localStorage.removeItem(SESSION_KEY); updateAuthUI(); });
 
 // ====== Data I/O ======
-async function getData(){
-  const r = await fetch(API, {method:'GET'});
-  let j = {};
-  try{ j = await r.json(); }catch{}
-  if (!r.ok) throw new Error((j && j.error) ? j.error : `HTTP ${r.status}`);
+async function getData() {
+  const r = await fetch(API, { method:'GET' });
+  let j={}; try { j = await r.json(); } catch {}
+  if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
   return j;
 }
-async function addTx(tx){
-  const r = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(tx)});
-  const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || 'Gagal simpan');
-  return j;
+async function addTx(tx) {
+  const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
+  const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error||'Gagal simpan'); return j;
 }
-async function updateTx(tx){
-  const r = await fetch(API,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(tx)});
-  const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || 'Gagal update');
-  return j;
+async function updateTx(tx) {
+  const r = await fetch(API, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
+  const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error||'Gagal update'); return j;
 }
-async function deleteTx(id){
-  const r = await fetch(API,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
-  const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || 'Gagal hapus');
-  return j;
+async function deleteTx(id) {
+  const r = await fetch(API, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id}) });
+  const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error||'Gagal hapus'); return j;
 }
 
-// ====== Helpers tanggal & agregasi ======
-function computeSums(list){
+// ====== Helpers data ======
+function computeSums(list) {
   const sumIn = list.filter(t=>t.type==='Pemasukan').reduce((a,b)=>a+b.amount,0);
   const sumOut= list.filter(t=>t.type==='Pengeluaran').reduce((a,b)=>a+b.amount,0);
   return { sumIn, sumOut, balance: sumIn - sumOut };
 }
 function monthKey(d){ return (d||'').slice(0,7); }
 function yearKey(d){ return (d||'').slice(0,4); }
-function listMonths(list){ const s=new Set(list.map(t=>monthKey(t.date))); return Array.from(s).filter(Boolean).sort().reverse(); }
+function listMonths(list){ const s = new Set(list.map(t=>monthKey(t.date))); return Array.from(s).filter(Boolean).sort().reverse(); }
 function applyFilter(list){ return (currentMonthFilter==='ALL') ? list : list.filter(t=>monthKey(t.date)===currentMonthFilter); }
 function toIndoMonth(ym){
   const [y,m]=ym.split('-').map(Number);
   const id=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   return `${id[m]} ${y}`;
 }
-function toIndoDay(ymd){ // 2025-10-07 -> 07 Okt
-  const [y,m,d] = ymd.split('-').map(Number);
-  const id = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-  return `${String(d).padStart(2,'0')} ${id[m-1]}`;
-}
-function isoWeek(dStr){ // {year,week}
-  const d = new Date(dStr);
-  const day = (d.getDay()+6)%7; // Senin=0
-  d.setDate(d.getDate()-day+3); // Kamis pekan itu
-  const thursday = new Date(d.getFullYear(),0,4);
-  const diff = (d - thursday)/86400000;
-  const week = 1 + Math.floor(diff/7);
-  return { year: d.getFullYear(), week };
-}
-function weekKey(dStr){
-  const {year,week} = isoWeek(dStr);
-  return `${year}-W${String(week).padStart(2,'0')}`;
-}
-function labelForPeriodKey(period, key){
-  if (period==='daily')   return toIndoDay(key);
-  if (period==='weekly')  { const [y,w]=key.split('-W'); return `Pekan ${Number(w)} ${y}`; }
-  if (period==='monthly') return toIndoMonth(key);
-  if (period==='yearly')  return key;
-  return key;
-}
-function groupByPeriod(list, period){
-  const bucket = {};
-  list.forEach(t=>{
-    const k = period==='daily' ? t.date :
-              period==='weekly' ? weekKey(t.date) :
-              period==='monthly'? monthKey(t.date) : yearKey(t.date);
-    if (!bucket[k]) bucket[k] = {in:0,out:0};
-    if (t.type==='Pemasukan') bucket[k].in += t.amount;
-    else bucket[k].out += t.amount;
-  });
-  const keys = Object.keys(bucket).sort();
-  const labels = keys.map(k => labelForPeriodKey(period,k));
-  const ins = keys.map(k=>bucket[k].in);
-  const outs= keys.map(k=>bucket[k].out);
-  return { labels, ins, outs, keys };
-}
 
-// ====== Kategori komposisi dari "keterangan" ======
-const CATEGORY_RULES = {
-  pemasukan: [
-    {name:'Gaji', kw:['gaji','salary','upah']},
-    {name:'Penjualan', kw:['jual','penjualan','order','invoice','nota']},
-    {name:'Transfer', kw:['transfer','tf','kirim']},
-    {name:'Bunga/Bonus', kw:['bunga','bonus','cashback','insentif']},
-    {name:'Lainnya', kw:[]}
-  ],
-  pengeluaran: [
-    {name:'Makanan & Minuman', kw:['makan','minum','warung','resto','kopi','snack','mie','nasi']},
-    {name:'Transportasi', kw:['bbm','bensin','pertalite','grab','gojek','bus','parkir','tol','angkot','ojek']},
-    {name:'Tagihan & Utilitas', kw:['listrik','token','air','pdam','wifi','indihome','pulsa','paket','telkom','pln']},
-    {name:'Belanja & Rumah Tangga', kw:['belanja','market','indomaret','alfamart','pasar','sabun','beras','alat']},
-    {name:'Kesehatan', kw:['obat','klinik','dokter','bpjs']},
-    {name:'Pendidikan', kw:['sekolah','spp','les','buku']},
-    {name:'Operasional', kw:['operasional','maintenance','servis','service','perbaikan','sewa','kontrak']},
-    {name:'Hiburan', kw:['nonton','game','netflix','spotify']},
-    {name:'Lainnya', kw:[]}
-  ]
-};
-function findCategory(type, note){
-  const low = (note||'').toLowerCase();
-  const rules = (type==='Pemasukan') ? CATEGORY_RULES.pemasukan : CATEGORY_RULES.pengeluaran;
-  for (const r of rules){
-    if (r.kw.some(k=> low.includes(k))) return r.name;
+// ====== Kategori berdasarkan keterangan ======
+function detectCategory(note, type){
+  const s = String(note||'').toLowerCase();
+  if (type==='Pemasukan'){
+    if (/\bgaji|salary|upah\b/.test(s)) return 'Gaji';
+    if (/\bbonus|komisi|tips?\b/.test(s)) return 'Bonus/Komisi';
+    if (/\bjual|penjualan|order|dagang|jualan\b/.test(s)) return 'Penjualan';
+    if (/\btransfer|tf|hutang dibayar|piutang\b/.test(s)) return 'Transfer/Masuk';
+    if (/\bhadiah|gift|sumbangan|donasi\b/.test(s)) return 'Hadiah/Donasi';
+    if (/\bsewa|rental|kontrak\b/.test(s)) return 'Sewa';
+    return 'Lainnya';
+  } else {
+    if (/\bmakan|kuliner|warung|resto|kafe|cafe|snack|minum\b/.test(s)) return 'Makanan & Minuman';
+    if (/\btransport|ongkir|grab|gojek|ojek|bus|kereta|taksi|tol|parkir\b/.test(s)) return 'Transportasi';
+    if (/\bbelanja|market|mall|toko|shop|beli\b/.test(s)) return 'Belanja';
+    if (/\bpulsa|data|kuota|internet|telkom|telp|telepon\b/.test(s)) return 'Pulsa/Internet';
+    if (/\blistrik|token|pln\b/.test(s)) return 'Listrik';
+    if (/\bair|pdam\b/.test(s)) return 'Air';
+    if (/\bbensin|bbm|solar|pertalite|pertamax\b/.test(s)) return 'BBM';
+    if (/\bsekolah|kuliah|buku|pendidikan\b/.test(s)) return 'Pendidikan';
+    if (/\bkesehatan|obat|dokter|klinik|rs\b/.test(s)) return 'Kesehatan';
+    if (/\bhiburan|film|movie|netflix|game\b/.test(s)) return 'Hiburan';
+    if (/\bkontrakan|sewa|kos|kredit|cicil\b/.test(s)) return 'Hunian/Kontrak';
+    if (/\bpajak|retribusi|administrasi\b/.test(s)) return 'Pajak/Administrasi';
+    return 'Lainnya';
   }
-  return 'Lainnya';
-}
-function buildComposition(list){
-  const income = {}, expense = {};
-  list.forEach(t=>{
-    const cat = findCategory(t.type, t.note);
-    if (t.type==='Pemasukan') income[cat]=(income[cat]||0)+t.amount;
-    else expense[cat]=(expense[cat]||0)+t.amount;
-  });
-  return { income, expense };
 }
 
-// ====== Render ======
+// ====== ISO Week ======
+function isoWeekKey(dateStr){
+  const d = new Date(dateStr+"T00:00:00");
+  const day = (d.getUTCDay() + 6) % 7; // Mon=0
+  const thursday = new Date(d); thursday.setUTCDate(d.getUTCDate() - day + 3);
+  const firstThu = new Date(Date.UTC(thursday.getUTCFullYear(),0,4));
+  const week = 1 + Math.round(((thursday - firstThu) / 86400000 - 3) / 7);
+  return `${thursday.getUTCFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+
+// ====== Render Utama ======
 function render(){
   const filtered = applyFilter(state.transactions).sort((a,b)=> (a.date<b.date?1:-1));
   const {sumIn,sumOut,balance} = computeSums(filtered);
@@ -198,37 +148,32 @@ function render(){
   const months = listMonths(state.transactions);
   const sel = $('#filter-month'); sel.innerHTML = '';
   sel.appendChild(el('option',{value:'ALL',text:'Semua Bulan'}));
-  months.forEach(m=> sel.appendChild(el('option',{value:m,text:toIndoMonth(m)})));
+  months.forEach(m => sel.appendChild(el('option',{value:m,text:toIndoMonth(m)})));
   sel.value = currentMonthFilter;
 
-  // table riwayat
+  // table
   const tbody = $('#tbody'); tbody.innerHTML = '';
   filtered.forEach(t=>{
     const tr = el('tr',{},[
-      el('td',{text:t.date}),
-      el('td',{text:t.note||'-'}),
-      el('td',{text:t.type}),
-      el('td',{class:'right',text:fmtIDR(t.amount)}),
+      el('td',{text: t.date}),
+      el('td',{text: t.note || '-'}),
+      el('td',{text: t.type}),
+      el('td',{class:'right', text: fmtIDR(t.amount)}),
       el('td',{},[
         btnSmall('Edit', ()=>openEdit(t)),
         document.createTextNode(' '),
         btnSmallDanger('Hapus', async ()=>{
           if (!confirm('Hapus transaksi ini?')) return;
-          try{ await deleteTx(t.id); await loadData(); }catch(e){ alert(e.message); }
+          try { await deleteTx(t.id); await loadData(); } catch(e){ alert(e.message); }
         })
       ])
     ]);
     tbody.appendChild(tr);
   });
 
-  // analisis ringkas
+  // charts + laporan
   updateAnalytics(filtered);
-
-  // laporan periodik
-  updateReport(filtered);
-
-  // komposisi kategori
-  updateComposition(filtered);
+  renderReports(state.transactions); // laporan gunakan semua data supaya lengkap
 }
 function btnSmall(txt, fn){ const b=el('button',{class:'btn',text:txt}); b.addEventListener('click',fn); return b;}
 function btnSmallDanger(txt, fn){ const b=el('button',{class:'btn danger',text:txt}); b.addEventListener('click',fn); return b;}
@@ -268,10 +213,10 @@ $('#form-tx')?.addEventListener('submit', async (e)=>{
     date: $('#tx-date').value
   };
   if (!data.amount || data.amount <= 0) return showFormError('Jumlah harus lebih dari 0');
-  try{
+  try {
     if (data.id) await updateTx(data); else await addTx(data);
     dlg.close(); await loadData();
-  }catch(err){ showFormError(err.message); }
+  } catch (err) { showFormError(err.message); }
 });
 function showFormError(msg){ const e=$('#form-error'); e.textContent=msg; e.hidden=false; }
 attachThousandsMask($('#tx-amount'));
@@ -284,25 +229,17 @@ const disp = $('#calc-display');
 document.querySelectorAll('.calc-grid button').forEach(b=>{
   b.addEventListener('click', ()=>{
     const v = b.textContent;
-    if (v==='C') disp.value='0';
-    else if (v==='='){ try{ disp.value=String(eval(disp.value)); }catch{ disp.value='Error'; } }
-    else { disp.value = disp.value==='0'? v : disp.value+v; }
+    if (v==='C') disp.value = '0';
+    else if (v==='=') { try { disp.value = String(eval(disp.value)); } catch { disp.value = 'Error'; } }
+    else { disp.value = disp.value==='0' ? v : disp.value + v; }
   });
 });
 
-// ====== Filter Bulan + Tabs ======
-$('#filter-month')?.addEventListener('change', e=>{ currentMonthFilter=e.target.value; render(); });
-document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    reportPeriod = btn.getAttribute('data-period');
-    updateReport(applyFilter(state.transactions));
-  });
-});
+// ====== Filter Bulan ======
+$('#filter-month')?.addEventListener('change', (e)=>{ currentMonthFilter = e.target.value; render(); });
 
-// ====== Charts (ringkas) ======
-let chartBalance, chartMonthly, chartShare, chartReport, chartIncomeComp, chartExpenseComp;
+// ====== Analitik (Chart.js) ======
+let chartBalance, chartMonthly, chartShare, chartIncomeCat, chartExpenseCat;
 Chart.defaults.color = '#e7f5ee';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.12)';
 
@@ -321,10 +258,10 @@ function updateAnalytics(list){
     byDate[key] = (byDate[key]||0) + delta;
   });
   const dates = Object.keys(byDate).sort();
-  let run=0; const saldoSeries = dates.map(d=> (run += byDate[d]));
+  let run = 0; const saldoSeries = dates.map(d=> (run += byDate[d]));
   drawBalanceChart(dates, saldoSeries);
 
-  // per bulan
+  // pemasukan vs pengeluaran per bulan
   const byMonth = {};
   list.forEach(t=>{
     const m = monthKey(t.date);
@@ -335,45 +272,107 @@ function updateAnalytics(list){
   drawMonthlyChart(months.map(toIndoMonth), months.map(m=>byMonth[m].in), months.map(m=>byMonth[m].out));
 
   // share total
-  const {sumIn,sumOut} = computeSums(list);
-  drawShareChart([sumIn,sumOut]);
+  const {sumIn, sumOut} = computeSums(list);
+  drawShareChart([sumIn, sumOut]);
+
+  // kategori (berdasarkan filter)
+  const catIn = {}; const catOut = {};
+  list.forEach(t=>{
+    const cat = detectCategory(t.note, t.type);
+    if (t.type==='Pemasukan') catIn[cat] = (catIn[cat]||0) + t.amount;
+    else catOut[cat] = (catOut[cat]||0) + t.amount;
+  });
+  drawCatChart('chartIncomeCat', catIn);
+  drawCatChart('chartExpenseCat', catOut);
 }
 function drawBalanceChart(labels, data){
-  const ctx = $('#chartBalance');
-  toggleNoData('chartBalance', labels.length===0);
-  chartBalance?.destroy();
-  chartBalance = new Chart(ctx,{
+  const ctx = $('#chartBalance'); toggleNoData('chartBalance', labels.length===0); chartBalance?.destroy();
+  chartBalance = new Chart(ctx, {
     type:'line',
-    data:{labels, datasets:[{label:'Saldo kumulatif', data, tension:.25, fill:true, backgroundColor:'rgba(34,197,94,.15)', borderColor:'#22c55e', pointRadius:0}]},
-    options:{ maintainAspectRatio:false, plugins:{tooltip:{callbacks:{label:c=>fmtIDR(c.parsed.y)}}}, scales:{y:{ticks:{callback:v=>(v).toLocaleString('id-ID')}}} }
+    data:{ labels, datasets:[{ label:'Saldo kumulatif', data, tension:.25, fill:true, backgroundColor:'rgba(34,197,94,.15)', borderColor:'#22c55e', pointRadius:0 }] },
+    options:{ maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label: c=> fmtIDR(c.parsed.y) } } }, scales:{ y:{ ticks:{ callback:v=> (v).toLocaleString('id-ID') } } } }
   });
 }
 function drawMonthlyChart(labels, inData, outData){
-  const ctx = $('#chartMonthly');
-  toggleNoData('chartMonthly', labels.length===0);
-  chartMonthly?.destroy();
-  chartMonthly = new Chart(ctx,{
+  const ctx = $('#chartMonthly'); toggleNoData('chartMonthly', labels.length===0); chartMonthly?.destroy();
+  chartMonthly = new Chart(ctx, {
     type:'bar',
-    data:{labels, datasets:[
-      {label:'Pemasukan', data:inData, backgroundColor:'#22c55e'},
-      {label:'Pengeluaran', data:outData, backgroundColor:'#ff6b6b'}
-    ]},
-    options:{ maintainAspectRatio:false, plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtIDR(c.parsed.y)}`}}}, scales:{y:{ticks:{callback:v=>(v).toLocaleString('id-ID')}}} }
+    data:{ labels, datasets:[ { label:'Pemasukan', data:inData, backgroundColor:'#22c55e' }, { label:'Pengeluaran', data:outData, backgroundColor:'#ff6b6b' } ] },
+    options:{ maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label:c=> `${c.dataset.label}: ${fmtIDR(c.parsed.y)}` } } }, scales:{ y:{ ticks:{ callback:v=> (v).toLocaleString('id-ID') } } } }
   });
 }
 function drawShareChart(values){
-  const ctx = $('#chartShare');
-  const empty = (values[0]||0)+(values[1]||0)===0;
-  toggleNoData('chartShare', empty);
-  chartShare?.destroy();
-  chartShare = new Chart(ctx,{
+  const ctx = $('#chartShare'); const empty = (values[0]||0)+(values[1]||0)===0; toggleNoData('chartShare', empty); chartShare?.destroy();
+  chartShare = new Chart(ctx, {
     type:'doughnut',
-    data:{labels:['Pemasukan','Pengeluaran'], datasets:[{data:values, backgroundColor:['#22c55e','#ff6b6b']}]},
-    options:{ maintainAspectRatio:false, plugins:{tooltip:{callbacks:{label:c=>`${c.label}: ${fmtIDR(c.parsed)}`}}} }
+    data:{ labels:['Pemasukan','Pengeluaran'], datasets:[{ data: values, backgroundColor:['#22c55e','#ff6b6b'] }] },
+    options:{ maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label:c=> `${c.label}: ${fmtIDR(c.parsed)}` } } } }
+  });
+}
+function drawCatChart(canvasId, dict){
+  const labels = Object.keys(dict); const vals = labels.map(k=>dict[k]);
+  toggleNoData(canvasId, labels.length===0);
+  const ctx = document.getElementById(canvasId);
+  const inst = (canvasId==='chartIncomeCat') ? chartIncomeCat : chartExpenseCat;
+  inst?.destroy();
+  const newInst = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: vals }] },
+    options:{
+      maintainAspectRatio:false,
+      plugins:{ tooltip:{ callbacks:{ label:c=> `${c.label}: ${fmtIDR(c.parsed)}` } }, legend:{ position:'bottom' } }
+    }
+  });
+  if (canvasId==='chartIncomeCat') chartIncomeCat = newInst; else chartExpenseCat = newInst;
+}
+window.addEventListener('resize', ()=>{
+  chartBalance?.resize(); chartMonthly?.resize(); chartShare?.resize(); chartIncomeCat?.resize(); chartExpenseCat?.resize();
+});
+
+// ====== Laporan (harian/mingguan/bulanan/tahunan) ======
+function renderReports(all){
+  // group helpers
+  const gDaily = groupBy(all, t=>t.date);
+  const gWeekly= groupBy(all, t=>isoWeekKey(t.date));
+  const gMonthly= groupBy(all, t=>monthKey(t.date));
+  const gYearly = groupBy(all, t=>yearKey(t.date));
+
+  fillReport('#tb-harian', sortKeys(gDaily).slice(-30), (k)=>k);                 // 30 hari terakhir
+  fillReport('#tb-mingguan', sortKeys(gWeekly).slice(-12), (k)=>k);             // 12 minggu terakhir
+  fillReport('#tb-bulanan', sortKeys(gMonthly).slice(-12), (k)=>toIndoMonth(k));// 12 bulan terakhir
+  fillReport('#tb-tahunan', sortKeys(gYearly), (k)=>k);
+}
+function groupBy(list, keyFn){
+  const map = {};
+  list.forEach(t=>{
+    const k = keyFn(t);
+    if (!map[k]) map[k] = {in:0,out:0};
+    if (t.type==='Pemasukan') map[k].in += t.amount; else map[k].out += t.amount;
+  });
+  return map;
+}
+function sortKeys(map){
+  return Object.keys(map).sort((a,b)=> a<b?-1:1).map(k=>({ key:k, ...map[k] }));
+}
+function fillReport(tbodySel, rows, labeler){
+  const tb = $(tbodySel); tb.innerHTML='';
+  rows.forEach(r=>{
+    const tr = el('tr',{},[
+      el('td',{text: labeler(r.key)}),
+      el('td',{class:'right', text: fmtIDR(r.in)}),
+      el('td',{class:'right', text: fmtIDR(r.out)}),
+      el('td',{class:'right', text: fmtIDR(r.in - r.out)}),
+    ]);
+    tb.appendChild(tr);
   });
 }
 
-// ====== Laporan periodik (harian/mingguan/bulanan/tahunan) ======
-function updateReport(list){
-  const g = groupByPeriod(list, reportPeriod);
-  toggleNoData('chartReport', g.labels.length===0
+// ====== Boot ======
+async function loadData() {
+  try { const data = await getData();
+    state = { transactions: Array.isArray(data.transactions)? data.transactions : [] };
+    render();
+  } catch (e) { alert('Gagal mengambil data: ' + e.message); }
+}
+updateAuthUI();
+if (localStorage.getItem(SESSION_KEY)) loadData();
