@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Laporan Keuangan</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Chart.js untuk analisis -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -18,7 +18,7 @@
   </header>
 
   <main class="container">
-    <!-- Panel Login -->
+    <!-- LOGIN -->
     <section id="screen-login" class="card">
       <h2>Selamat Datang</h2>
       <p>Masuk untuk melanjutkan</p>
@@ -29,7 +29,7 @@
       <small class="muted">PIN aman: diset di environment Vercel (tanpa hardcode di client).</small>
     </section>
 
-    <!-- Dashboard -->
+    <!-- APP -->
     <section id="screen-app" class="hidden">
       <div class="grid-3">
         <div class="card stat">
@@ -67,21 +67,30 @@
         </div>
       </section>
 
-      <!-- ANALISIS -->
+      <!-- ANALISIS & DIAGRAM -->
       <section class="card">
         <h2>Analisis & Diagram</h2>
         <div class="charts-grid">
           <div class="card">
             <h3>Saldo Kumulatif (berdasarkan filter)</h3>
-            <canvas id="chartBalance" height="120"></canvas>
+            <div class="chart-wrap">
+              <canvas id="chartBalance"></canvas>
+              <div class="nodata">Belum ada data</div>
+            </div>
           </div>
           <div class="card">
             <h3>Pemasukan vs Pengeluaran per Bulan</h3>
-            <canvas id="chartMonthly" height="120"></canvas>
+            <div class="chart-wrap">
+              <canvas id="chartMonthly"></canvas>
+              <div class="nodata">Belum ada data</div>
+            </div>
           </div>
           <div class="card">
             <h3>Komposisi Total</h3>
-            <canvas id="chartShare" height="120"></canvas>
+            <div class="chart-wrap">
+              <canvas id="chartShare"></canvas>
+              <div class="nodata">Belum ada data</div>
+            </div>
           </div>
         </div>
 
@@ -97,7 +106,7 @@
     </section>
   </main>
 
-  <!-- Modal Tambah/Edit -->
+  <!-- MODAL Tambah/Edit -->
   <dialog id="modal-tx" class="modal">
     <form method="dialog" id="form-tx" class="card">
       <h3 id="modal-title">Tambah Transaksi Baru</h3>
@@ -114,7 +123,6 @@
       </div>
       <div class="row">
         <label>Jumlah:
-          <!-- pakai text supaya bisa titik ribuan saat mengetik -->
           <input id="tx-amount" class="thousands" type="text" inputmode="numeric" placeholder="0">
         </label>
         <label>Tanggal:
@@ -130,7 +138,7 @@
     </form>
   </dialog>
 
-  <!-- Modal Kalkulator -->
+  <!-- MODAL Kalkulator -->
   <dialog id="modal-calc" class="modal">
     <div class="card">
       <h3>Kalkulator</h3>
