@@ -1,266 +1,35 @@
-/* Import Font */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-/* Variabel Warna untuk kemudahan kustomisasi */
 :root {
-    --bg-color: #0a0a0a;
-    --primary-color: #1ed760; /* Hijau ala Spotify */
-    --surface-color: #1a1a1a;
-    --text-color: #e0e0e0;
-    --text-secondary-color: #a0a0a0;
-    --glass-bg: rgba(26, 26, 26, 0.5);
-    --border-color: rgba(255, 255, 255, 0.1);
+  --bg:#0f141a; --card:#1a232b; --muted:#9fb3c8; --txt:#e8f0f7;
+  --primary:#2ecc71; --danger:#ff6b6b; --border:#24313d;
 }
-
-/* Reset dan Pengaturan Dasar */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    line-height: 1.6;
-}
-
-/* Tampilan Utama */
-.screen {
-    display: none; /* Sembunyikan semua screen secara default */
-}
-
-.screen.active {
-    display: block; /* Tampilkan hanya yang aktif */
-}
-
-/* === Style Halaman Login === */
-#login-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-image: radial-gradient(circle at top right, var(--primary-color), transparent 40%),
-                      radial-gradient(circle at bottom left, #4a90e2, transparent 30%);
-}
-
-.login-container {
-    padding: 40px;
-    background: var(--glass-bg);
-    border-radius: 15px;
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    text-align: center;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.login-container h1 {
-    margin-bottom: 10px;
-    color: #fff;
-}
-
-.login-container p {
-    margin-bottom: 25px;
-    color: var(--text-secondary-color);
-}
-
-input[type="text"], input[type="password"], input[type="number"], input[type="date"], select {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-color);
-    font-size: 16px;
-}
-
-input::placeholder {
-    color: var(--text-secondary-color);
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: var(--primary-color);
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #19b351;
-}
-
-.error-message {
-    color: #ff4d4d;
-    margin-top: 10px;
-    min-height: 20px;
-}
-
-/* === Style Dashboard === */
-#main-app {
-    padding: 20px;
-    max-width: 1200px;
-    margin: auto;
-}
-
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-header h1 {
-    color: #fff;
-}
-
-#logout-button {
-    width: auto;
-    padding: 10px 20px;
-    background-color: #ff4d4d;
-    color: #fff;
-}
-
-.summary-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.card {
-    background: var(--surface-color);
-    padding: 25px;
-    border-radius: 10px;
-    border-left: 5px solid var(--primary-color);
-}
-
-.card h3 {
-    color: var(--text-secondary-color);
-    margin-bottom: 10px;
-}
-
-.card p {
-    font-size: 2em;
-    font-weight: 600;
-    color: #fff;
-}
-
-.actions {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-    align-items: center;
-}
-
-#add-transaction-btn, #calculator-btn {
-    width: auto;
-    padding: 10px 20px;
-}
-#calculator-btn {
-    background: #4a90e2;
-    color: #fff;
-}
-
-.chart-container {
-    background-color: var(--surface-color);
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-}
-
-.transaction-list table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.transaction-list th, .transaction-list td {
-    padding: 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.transaction-list th {
-    color: var(--text-secondary-color);
-}
-
-.pemasukan {
-    color: var(--primary-color);
-}
-
-.pengeluaran {
-    color: #ff4d4d;
-}
-
-/* === Style Modal === */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.modal-content {
-    position: relative;
-    margin: 10% auto;
-    padding: 30px;
-    width: 90%;
-    max-width: 500px;
-    background: var(--glass-bg);
-    border-radius: 15px;
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.close-btn, .close-calc-btn {
-    color: var(--text-secondary-color);
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* === Style Kalkulator === */
-.calculator-display input {
-    text-align: right;
-    font-size: 2.5em;
-    padding-right: 20px;
-    background-color: var(--bg-color);
-}
-
-.calculator-keys {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-.calculator-keys button {
-    background: var(--surface-color);
-    color: var(--text-color);
-    font-size: 1.5em;
-}
-.calculator-keys .operator {
-    background: #4a90e2;
-    color: #fff;
-}
-.calculator-keys .equal-sign {
-    grid-column: span 4;
-    background: var(--primary-color);
-    color: #000;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Inter,Roboto,Arial;background:var(--bg);color:var(--txt)}
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0b1015;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.container{padding:16px;max-width:1000px;margin:0 auto}
+.hidden{display:none}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.grid-3{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:720px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+.stat h3{margin:0 0 6px;color:var(--muted);font-weight:600}
+.stat div{font-size:24px;font-weight:700}
+.toolbar{display:flex;gap:8px;align-items:center;margin:12px 0}
+.spacer{flex:1}
+.btn{background:#22303c;color:var(--txt);border:1px solid var(--border);padding:8px 12px;border-radius:10px;cursor:pointer}
+.btn.primary{background:var(--primary);border-color:transparent;color:#04240f;font-weight:700}
+.btn.danger{background:var(--danger);border-color:transparent;color:#320505}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.row.end{justify-content:flex-end}
+input,select{background:#0b1015;border:1px solid var(--border);color:var(--txt);padding:8px;border-radius:8px;width:100%}
+label{display:flex;flex-direction:column;gap:6px;min-width:200px}
+.table-wrap{overflow:auto}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-bottom:1px solid var(--border)}
+.table th{color:var(--muted);text-align:left;font-weight:600}
+.right{text-align:right}
+.modal::backdrop{background:rgba(0,0,0,.6)}
+.calc-display{width:100%;font-size:22px;padding:10px;margin:8px 0;background:#0b1015;border:1px solid var(--border);border-radius:8px;color:var(--txt);text-align:right}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.calc-grid button{padding:12px;border-radius:10px;border:1px solid var(--border);background:#22303c;color:var(--txt);font-size:16px}
+.calc-grid .wide{grid-column:span 4}
+.error{color:#ff9b9b;margin-top:8px}
+.muted{color:var(--muted)}
