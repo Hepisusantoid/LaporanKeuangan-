@@ -26,17 +26,16 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
     'X-Master-Key': MASTER,
     'X-Access-Key': MASTER,
-    'X-Bin-Meta': 'false',
+    'X-Bin-Meta': 'false', // GET akan mengembalikan record langsung (tanpa {record:...})
   };
 
   try {
     if (req.method === 'GET') {
       const { list } = await loadList(base, headers);
-      // Selalu kirim objek standar agar FE konsisten
       return res.status(200).json({ transactions: list });
     }
 
-    // Ambil state terkini
+    // Ambil state terkini untuk operasi tulis
     const { list } = await loadList(base, headers);
 
     if (req.method === 'POST') {
@@ -118,11 +117,13 @@ async function loadList(base, headers){
   const r = await fetch(`${base}/latest`, { headers, cache:'no-store' });
   if (!r.ok) throw new Error(`GET ${r.status}: ${await r.text()}`);
   const j = await r.json();
-  return { list: extractList(j?.record) };
+  // PERBAIKAN: bila X-Bin-Meta:false ⇒ j adalah record langsung
+  const record = (j && typeof j === 'object' && 'record' in j) ? j.record : j;
+  return { list: extractList(record) };
 }
 async function saveList(base, headers, list){
   // Simpan balik SELALU sebagai objek standar
   const r = await fetch(base, { method:'PUT', headers, body: JSON.stringify({ transactions: list }) });
   if (!r.ok) throw new Error(`PUT ${r.status}: ${await r.text()}`);
   return r.json();
-          }
+}
