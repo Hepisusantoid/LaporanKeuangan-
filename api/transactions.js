@@ -1,7 +1,7 @@
 // /api/transactions.js
-// Proxy aman ke JSONBin + kompatibel format lama/baru
-// - Bisa baca record: ARRAY langsung [] ATAU { transactions: [] }
-// - Selalu menyimpan balik dalam bentuk { transactions: [...] }
+// Proxy aman ke JSONBin (format kompatibel) — TANPA pembatasan saldo.
+// - Baca data: bisa array [] langsung ATAU { transactions: [] }
+// - Simpan data: SELALU sebagai { transactions: [...] }
 
 export default async function handler(req, res) {
   // CORS
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
     'X-Master-Key': MASTER,
     'X-Access-Key': MASTER,
-    'X-Bin-Meta': 'false', // GET akan mengembalikan record langsung (tanpa {record:...})
+    'X-Bin-Meta': 'false', // GET → kembalikan record langsung
   };
 
   try {
@@ -41,10 +41,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const body = await readJSON(req);
       const tx = sanitizeTx(body);
-      // validasi saldo (pengeluaran tak boleh melebihi saldo saat ini)
-      if (tx.type === 'Pengeluaran' && tx.amount > calcSaldo(list)) {
-        return res.status(400).json({ error: 'Pengeluaran melebihi saldo saat ini' });
-      }
+      // >>> TIDAK ADA pembatasan: pengeluaran boleh melebihi saldo
       list.push(tx);
       await saveList(base, headers, list);
       return res.status(201).json({ ok: true, tx });
@@ -54,6 +51,7 @@ export default async function handler(req, res) {
       const body = await readJSON(req);
       const id = body?.id;
       if (!id) return res.status(400).json({ error: 'id required' });
+
       const idx = list.findIndex(t => t.id === id);
       if (idx === -1) return res.status(404).json({ error: 'not found' });
 
@@ -63,11 +61,7 @@ export default async function handler(req, res) {
         amount: Number(body?.amount ?? list[idx].amount)
       };
 
-      const without = list.filter(t => t.id !== id);
-      if (updated.type === 'Pengeluaran' && updated.amount > calcSaldo(without)) {
-        return res.status(400).json({ error: 'Pengeluaran melebihi saldo saat ini' });
-      }
-
+      // >>> TIDAK ADA pembatasan saldo pada update
       list[idx] = updated;
       await saveList(base, headers, list);
       return res.status(200).json({ ok: true, updated });
@@ -89,7 +83,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ===== Helpers =====
+/* =================== Helpers =================== */
 async function readJSON(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
@@ -99,31 +93,32 @@ async function readJSON(req) {
 function sanitizeTx(body){
   return {
     id: body?.id || rid(),
-    type: body?.type, // 'Pemasukan' | 'Pengeluaran'
+    type: body?.type,                  // 'Pemasukan' | 'Pengeluaran'
     note: body?.note || '',
-    amount: Number(body?.amount || 0),
+    amount: Number(body?.amount || 0), // angka murni
     date: body?.date || new Date().toISOString().slice(0,10)
   };
 }
 function rid(){ return 'tx_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
-function calcSaldo(list){ return list.reduce((a,t)=>a + (t.type==='Pemasukan'? t.amount : -t.amount), 0); }
 
 function extractList(record){
-  if (Array.isArray(record?.transactions)) return record.transactions; // bentuk baru
-  if (Array.isArray(record)) return record;                             // bentuk lama (array langsung)
-  return [];                                                            // fallback
+  if (Array.isArray(record?.transactions)) return record.transactions; // format baru
+  if (Array.isArray(record)) return record;                             // format lama (array)
+  return [];
 }
 async function loadList(base, headers){
   const r = await fetch(`${base}/latest`, { headers, cache:'no-store' });
   if (!r.ok) throw new Error(`GET ${r.status}: ${await r.text()}`);
   const j = await r.json();
-  // PERBAIKAN: bila X-Bin-Meta:false ⇒ j adalah record langsung
+  // Jika X-Bin-Meta:false → j = record langsung; kalau true → {record:...}
   const record = (j && typeof j === 'object' && 'record' in j) ? j.record : j;
   return { list: extractList(record) };
 }
 async function saveList(base, headers, list){
-  // Simpan balik SELALU sebagai objek standar
-  const r = await fetch(base, { method:'PUT', headers, body: JSON.stringify({ transactions: list }) });
+  // Selalu simpan sebagai objek standar
+  const r = await fetch(base, {
+    method:'PUT', headers, body: JSON.stringify({ transactions: list })
+  });
   if (!r.ok) throw new Error(`PUT ${r.status}: ${await r.text()}`);
   return r.json();
 }
