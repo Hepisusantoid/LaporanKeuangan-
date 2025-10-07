@@ -131,6 +131,10 @@ input:focus,select:focus{
 #screen-login .btn.primary{
   box-shadow:0 8px 24px rgba(34,197,94,.25), inset 0 1px 0 rgba(255,255,255,.2);
 }
+/* === Analitik grid === */
+.charts-grid{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:980px){.charts-grid{grid-template-columns:2fr 2fr 1.2fr}}
+.mini-table th,.mini-table td{white-space:nowrap}
 
 /* ===== CALCULATOR ===== */
 .calc-display{
