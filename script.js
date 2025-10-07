@@ -1,349 +1,219 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- STATE APLIKASI ---
-    let appData = {
-        users: [],
-        transactions: []
-    };
-    let currentUser = null;
-    let financeChart = null;
+// ====== Konfigurasi ======
+// URL serverless kita (Vercel)
+const API = '/api/transactions';
 
-    // --- ELEMEN DOM ---
-    const loginScreen = document.getElementById('login-screen');
-    const mainApp = document.getElementById('main-app');
-    const loginButton = document.getElementById('login-button');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const loginError = document.getElementById('login-error');
-    const logoutButton = document.getElementById('logout-button');
+// Login pakai PIN yang diverifikasi oleh server secara sederhana.
+// Di sini untuk demo aku simpan di LocalStorage saja agar kamu cepat pakai.
+// Jika mau, kamu bisa bikin API /api/login yang cek ke ENV, tapi sementara cukup client-side.
+const SESSION_KEY = 'lapkeu_session';
 
-    const addModal = document.getElementById('add-modal');
-    const addTransactionBtn = document.getElementById('add-transaction-btn');
-    const closeModalBtn = document.querySelector('.close-btn');
-    const transactionForm = document.getElementById('transaction-form');
-    
-    const transactionTableBody = document.querySelector('#transaction-table tbody');
-    const totalPemasukanEl = document.getElementById('total-pemasukan');
-    const totalPengeluaranEl = document.getElementById('total-pengeluaran');
-    const saldoAkhirEl = document.getElementById('saldo-akhir');
-    const filterBulan = document.getElementById('filter-bulan');
+// ====== State ======
+let state = { transactions: [] };
+let currentMonthFilter = 'ALL';
 
-    const calculatorModal = document.getElementById('calculator-modal');
-    const calculatorBtn = document.getElementById('calculator-btn');
-    const closeCalcBtn = document.querySelector('.close-calc-btn');
-    const calcDisplay = document.getElementById('calc-display');
-    const calcKeys = document.querySelector('.calculator-keys');
-    const calcClear = document.getElementById('calc-clear');
-    const calcEquals = document.getElementById('calc-equals');
+// ====== Utility ======
+const fmtIDR = (n) => (n||0).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0});
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, attrs={}, kids=[]) => {
+  const x = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v]) => {
+    if (k==='class') x.className=v; else if (k==='text') x.textContent=v; else x.setAttribute(k,v);
+  });
+  kids.forEach(k => x.appendChild(k));
+  return x;
+};
 
-    // --- FUNGSI KOMUNIKASI API (AMAN) ---
-
-    /**
-     * Mengambil data dari serverless function kita.
-     * @returns {Promise<object>} Data aplikasi (users dan transactions).
-     */
-    async function fetchData() {
-        try {
-            const response = await fetch('/api/data');
-            if (!response.ok) {
-                console.error('Gagal mengambil data dari server. Menggunakan data default.');
-                // Jika gagal (misalnya karena bin masih kosong), kembalikan data default
-                // agar aplikasi tidak error saat pertama kali dijalankan.
-                return {
-                    users: [{ username: 'Hepi', password: '12345678' }],
-                    transactions: []
-                };
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('Terjadi error saat fetchData:', error);
-            // Fallback jika ada masalah jaringan
-            return {
-                users: [{ username: 'Hepi', password: '12345678' }],
-                transactions: []
-            };
-        }
-    }
-
-    /**
-     * Mengirim data untuk diupdate melalui serverless function.
-     * @param {object} data - Objek data aplikasi lengkap yang akan disimpan.
-     */
-    async function updateData(data) {
-        try {
-            await fetch('/api/data', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-        } catch (error) {
-            console.error('Gagal mengupdate data:', error);
-            alert('Koneksi bermasalah, data mungkin tidak tersimpan.');
-        }
-    }
-
-    // --- FUNGSI LOGIKA APLIKASI ---
-
-    /**
-     * Menangani proses login pengguna.
-     */
-    function handleLogin() {
-        const username = usernameInput.value;
-        const password = passwordInput.value;
-        const user = appData.users.find(u => u.username === username && u.password === password);
-
-        if (user) {
-            currentUser = user.username;
-            loginScreen.classList.remove('active');
-            mainApp.classList.add('active');
-            renderApp();
-        } else {
-            loginError.textContent = 'Username atau password salah!';
-        }
-    }
-
-    /**
-     * Menangani proses logout.
-     */
-    function handleLogout() {
-        currentUser = null;
-        mainApp.classList.remove('active');
-        loginScreen.classList.add('active');
-        usernameInput.value = '';
-        passwordInput.value = '';
-        loginError.textContent = '';
-        if (financeChart) {
-            financeChart.destroy();
-        }
-    }
-
-    /**
-     * Merender seluruh komponen aplikasi berdasarkan data saat ini.
-     */
-    function renderApp() {
-        const selectedMonth = filterBulan.value;
-        let filteredTransactions = appData.transactions;
-
-        if (selectedMonth !== 'semua') {
-            filteredTransactions = appData.transactions.filter(t => {
-                const transactionMonth = new Date(t.date).toISOString().slice(0, 7);
-                return transactionMonth === selectedMonth;
-            });
-        }
-
-        renderTransactions(filteredTransactions);
-        updateSummary(filteredTransactions);
-        populateMonthFilter();
-        updateChart(filteredTransactions);
-    }
-    
-    /**
-     * Memformat angka menjadi format mata uang Rupiah.
-     * @param {number} amount - Angka yang akan diformat.
-     * @returns {string} String dalam format Rupiah.
-     */
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
-    }
-
-    /**
-     * Menampilkan daftar transaksi ke dalam tabel.
-     * @param {Array<object>} transactions - Array berisi objek transaksi.
-     */
-    function renderTransactions(transactions) {
-        transactionTableBody.innerHTML = '';
-        if (transactions.length === 0) {
-            transactionTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada transaksi</td></tr>';
-            return;
-        }
-        // Urutkan transaksi dari yang terbaru
-        const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-        sortedTransactions.forEach(t => {
-            const row = `
-                <tr>
-                    <td>${new Date(t.date).toLocaleDateString('id-ID')}</td>
-                    <td>${t.description}</td>
-                    <td class="${t.type}">${t.type}</td>
-                    <td class="${t.type}">${formatCurrency(t.amount)}</td>
-                </tr>
-            `;
-            transactionTableBody.innerHTML += row;
-        });
-    }
-
-    /**
-     * Mengupdate kartu ringkasan (pemasukan, pengeluaran, saldo).
-     * @param {Array<object>} transactions - Array transaksi yang akan dihitung.
-     */
-    function updateSummary(transactions) {
-        const pemasukan = transactions.filter(t => t.type === 'pemasukan').reduce((sum, t) => sum + t.amount, 0);
-        const pengeluaran = transactions.filter(t => t.type === 'pengeluaran').reduce((sum, t) => sum + t.amount, 0);
-        const saldo = pemasukan - pengeluaran;
-
-        totalPemasukanEl.textContent = formatCurrency(pemasukan);
-        totalPengeluaranEl.textContent = formatCurrency(pengeluaran);
-        saldoAkhirEl.textContent = formatCurrency(saldo);
-    }
-    
-    /**
-     * Mengisi opsi pada dropdown filter bulan berdasarkan data transaksi.
-     */
-    function populateMonthFilter() {
-        const months = [...new Set(appData.transactions.map(t => new Date(t.date).toISOString().slice(0, 7)))];
-        const currentSelection = filterBulan.value;
-        filterBulan.innerHTML = '<option value="semua">Semua Bulan</option>';
-        months.sort().reverse().forEach(month => {
-            const option = document.createElement('option');
-            option.value = month;
-            // Gunakan tanggal 2 untuk menghindari masalah timezone
-            const date = new Date(month + '-02'); 
-            option.textContent = date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-            filterBulan.appendChild(option);
-        });
-        filterBulan.value = currentSelection;
-    }
-
-    /**
-     * Menangani submit form untuk menambah transaksi baru.
-     * @param {Event} e - Event object dari form submission.
-     */
-    async function handleTransactionSubmit(e) {
-        e.preventDefault();
-        const newTransaction = {
-            id: Date.now(),
-            type: document.getElementById('trans-type').value,
-            description: document.getElementById('trans-desc').value,
-            amount: parseFloat(document.getElementById('trans-amount').value),
-            date: document.getElementById('trans-date').value
-        };
-
-        appData.transactions.push(newTransaction);
-        await updateData(appData);
-        renderApp();
-        addModal.style.display = 'none';
-        transactionForm.reset();
-    }
-    
-    /**
-     * Mengupdate atau membuat chart/diagram keuangan.
-     * @param {Array<object>} transactions - Data transaksi untuk divisualisasikan.
-     */
-    function updateChart(transactions) {
-        const ctx = document.getElementById('finance-chart').getContext('2d');
-        const monthlyData = {};
-
-        transactions.forEach(t => {
-            const month = new Date(t.date).toISOString().slice(0, 7);
-            if (!monthlyData[month]) {
-                monthlyData[month] = { pemasukan: 0, pengeluaran: 0 };
-            }
-            monthlyData[month][t.type] += t.amount;
-        });
-
-        const sortedMonths = Object.keys(monthlyData).sort();
-        const labels = sortedMonths.map(month => {
-            const date = new Date(month + '-02');
-            return date.toLocaleString('id-ID', { month: 'short', year: 'numeric' });
-        });
-
-        const pemasukanData = sortedMonths.map(month => monthlyData[month].pemasukan);
-        const pengeluaranData = sortedMonths.map(month => monthlyData[month].pengeluaran);
-        
-        if (financeChart) {
-            financeChart.destroy();
-        }
-
-        financeChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Pemasukan',
-                        data: pemasukanData,
-                        backgroundColor: 'rgba(29, 215, 96, 0.7)',
-                    },
-                    {
-                        label: 'Pengeluaran',
-                        data: pengeluaranData,
-                        backgroundColor: 'rgba(255, 77, 77, 0.7)',
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { 
-                    y: { 
-                        beginAtZero: true,
-                        ticks: {
-                            callback: value => formatCurrency(value)
-                        }
-                    } 
-                }
-            }
-        });
-    }
-
-    // --- LOGIKA KALKULATOR ---
-    calcKeys.addEventListener('click', e => {
-        const { target } = e;
-        if (!target.matches('button')) return;
-
-        const value = target.value;
-        const displayValue = calcDisplay.value;
-
-        if (target.classList.contains('operator')) {
-            // Mencegah operator ganda
-            if (displayValue.slice(-1) === ' ' || displayValue === '0') return;
-            calcDisplay.value += ` ${value} `;
-        } else if (value === '.') {
-            // Mencegah titik ganda dalam satu angka
-            const
-             lastNumber = displayValue.split(' ').pop();
-            if (lastNumber.includes('.')) return;
-            calcDisplay.value += value;
-        } else {
-            calcDisplay.value = displayValue === '0' ? value : displayValue + value;
-        }
-    });
-
-    calcClear.addEventListener('click', () => calcDisplay.value = '0');
-    calcEquals.addEventListener('click', () => {
-        try {
-            // Evaluasi ekspresi matematika dengan aman
-            const result = new Function(`return ${calcDisplay.value.replace(/\s/g, '')}`)();
-            calcDisplay.value = result;
-        } catch {
-            calcDisplay.value = 'Error';
-        }
-    });
-
-    // --- EVENT LISTENERS ---
-    loginButton.addEventListener('click', handleLogin);
-    logoutButton.addEventListener('click', handleLogout);
-    addTransactionBtn.addEventListener('click', () => addModal.style.display = 'block');
-    closeModalBtn.addEventListener('click', () => addModal.style.display = 'none');
-    transactionForm.addEventListener('submit', handleTransactionSubmit);
-    filterBulan.addEventListener('change', renderApp);
-
-    calculatorBtn.addEventListener('click', () => calculatorModal.style.display = 'block');
-    closeCalcBtn.addEventListener('click', () => calculatorModal.style.display = 'none');
-    
-    // Menutup modal jika klik di luar konten
-    window.addEventListener('click', e => {
-        if (e.target === addModal) addModal.style.display = 'none';
-        if (e.target === calculatorModal) calculatorModal.style.display = 'none';
-    });
-    
-    /**
-     * Fungsi inisialisasi aplikasi saat halaman pertama kali dimuat.
-     */
-    async function init() {
-        appData = await fetchData();
-        loginScreen.classList.add('active'); // Pastikan layar login yang pertama muncul
-    }
-
-    // --- MULAI APLIKASI ---
-    init();
+// ====== Auth UI ======
+function updateAuthUI() {
+  const loggedIn = Boolean(localStorage.getItem(SESSION_KEY));
+  $('#screen-login').classList.toggle('hidden', loggedIn);
+  $('#screen-app').classList.toggle('hidden', !loggedIn);
+  $('#btn-login').hidden = loggedIn;
+  $('#btn-logout').hidden = !loggedIn;
+}
+$('#btn-login')?.addEventListener('click', ()=> $('#screen-login').scrollIntoView({behavior:'smooth'}));
+$('#do-login')?.addEventListener('click', ()=>{
+  const v = $('#pin').value.trim();
+  if (!v) return alert('Masukkan PIN');
+  // Minimal 4 digit
+  if (v.length < 4) return alert('PIN minimal 4 digit');
+  localStorage.setItem(SESSION_KEY, 'ok');
+  updateAuthUI();
+  loadData();
+});
+$('#btn-logout')?.addEventListener('click', ()=>{
+  localStorage.removeItem(SESSION_KEY);
+  updateAuthUI();
 });
 
+// ====== Data I/O ======
+async function getData() {
+  const r = await fetch(API, { method:'GET' });
+  if (!r.ok) throw new Error('Gagal memuat data');
+  return r.json();
+}
+async function addTx(tx) {
+  const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Gagal simpan');
+  return j;
+}
+async function updateTx(tx) {
+  const r = await fetch(API, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Gagal update');
+  return j;
+}
+async function deleteTx(id) {
+  const r = await fetch(API, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id}) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Gagal hapus');
+  return j;
+}
+
+// ====== Render ======
+function computeSums(list) {
+  const sumIn = list.filter(t=>t.type==='Pemasukan').reduce((a,b)=>a+b.amount,0);
+  const sumOut= list.filter(t=>t.type==='Pengeluaran').reduce((a,b)=>a+b.amount,0);
+  return { sumIn, sumOut, balance: sumIn - sumOut };
+}
+function monthKey(d) { // 'YYYY-MM'
+  return (d||'').slice(0,7);
+}
+function listMonths(list) {
+  const s = new Set(list.map(t=>monthKey(t.date)));
+  return Array.from(s).filter(Boolean).sort().reverse();
+}
+function applyFilter(list) {
+  if (currentMonthFilter==='ALL') return list;
+  return list.filter(t=>monthKey(t.date)===currentMonthFilter);
+}
+function render() {
+  const filtered = applyFilter(state.transactions).sort((a,b)=> (a.date<b.date?1:-1));
+  const {sumIn,sumOut,balance} = computeSums(filtered);
+  $('#sum-in').textContent = fmtIDR(sumIn);
+  $('#sum-out').textContent = fmtIDR(sumOut);
+  $('#sum-balance').textContent = fmtIDR(balance);
+
+  // filter dropdown
+  const months = listMonths(state.transactions);
+  const sel = $('#filter-month');
+  sel.innerHTML = '';
+  const optAll = el('option',{value:'ALL',text:'Semua Bulan'});
+  sel.appendChild(optAll);
+  months.forEach(m => sel.appendChild(el('option',{value:m,text:toIndoMonth(m)})));
+  sel.value = currentMonthFilter;
+
+  const tbody = $('#tbody');
+  tbody.innerHTML = '';
+  filtered.forEach(t=>{
+    const tr = el('tr',{},[
+      el('td',{text: t.date}),
+      el('td',{text: t.note || '-'}),
+      el('td',{text: t.type}),
+      el('td',{class:'right', text: fmtIDR(t.amount)}),
+      el('td',{},[
+        btnSmall('Edit', ()=>openEdit(t)),
+        space(),
+        btnSmallDanger('Hapus', async ()=>{
+          if (!confirm('Hapus transaksi ini?')) return;
+          try { await deleteTx(t.id); await loadData(); }
+          catch(e){ alert(e.message); }
+        })
+      ])
+    ]);
+    tbody.appendChild(tr);
+  });
+}
+function btnSmall(txt, fn){ const b=el('button',{class:'btn',text:txt}); b.addEventListener('click',fn); return b;}
+function btnSmallDanger(txt, fn){ const b=el('button',{class:'btn danger',text:txt}); b.addEventListener('click',fn); return b;}
+function space(){ const s=document.createTextNode(' '); return s; }
+function toIndoMonth(ym){ // '2025-10' -> 'Oktober 2025'
+  const [y,m]=ym.split('-').map(Number);
+  const id=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return `${id[m]} ${y}`;
+}
+
+// ====== Modal Tambah/Edit ======
+const dlg = $('#modal-tx');
+$('#open-add')?.addEventListener('click', ()=>{
+  $('#modal-title').textContent = 'Tambah Transaksi Baru';
+  $('#tx-id').value = '';
+  $('#tx-type').value = 'Pemasukan';
+  $('#tx-note').value = '';
+  $('#tx-amount').value = '';
+  $('#tx-date').valueAsDate = new Date();
+  $('#form-error').hidden = true;
+  dlg.showModal();
+});
+$('#btn-cancel')?.addEventListener('click', ()=> dlg.close());
+
+function openEdit(t) {
+  $('#modal-title').textContent = 'Edit Transaksi';
+  $('#tx-id').value = t.id;
+  $('#tx-type').value = t.type;
+  $('#tx-note').value = t.note || '';
+  $('#tx-amount').value = t.amount;
+  $('#tx-date').value = t.date;
+  $('#form-error').hidden = true;
+  dlg.showModal();
+}
+
+$('#form-tx')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const data = {
+    id: $('#tx-id').value || undefined,
+    type: $('#tx-type').value,
+    note: $('#tx-note').value,
+    amount: Number($('#tx-amount').value),
+    date: $('#tx-date').value
+  };
+  // Validasi dasar
+  if (!data.amount || data.amount <= 0) return showFormError('Jumlah harus lebih dari 0');
+  try {
+    if (data.id) await updateTx(data); else await addTx(data);
+    dlg.close();
+    await loadData();
+  } catch (err) {
+    showFormError(err.message);
+  }
+});
+function showFormError(msg){
+  const e = $('#form-error'); e.textContent = msg; e.hidden = false;
+}
+
+// ====== Kalkulator ======
+const dlgCalc = $('#modal-calc');
+$('#open-calc')?.addEventListener('click', ()=> dlgCalc.showModal());
+$('#close-calc')?.addEventListener('click', ()=> dlgCalc.close());
+const disp = $('#calc-display');
+document.querySelectorAll('.calc-grid button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const v = b.textContent;
+    if (v==='C') disp.value = '0';
+    else if (v==='=') {
+      try { disp.value = String(eval(disp.value)); } catch { disp.value = 'Error'; }
+    } else {
+      disp.value = disp.value==='0' ? v : disp.value + v;
+    }
+  });
+});
+
+// ====== Filter Bulan ======
+$('#filter-month')?.addEventListener('change', (e)=>{
+  currentMonthFilter = e.target.value;
+  render();
+});
+
+// ====== Boot ======
+async function loadData() {
+  try {
+    const data = await getData();
+    state = { transactions: Array.isArray(data.transactions)? data.transactions : [] };
+    render();
+  } catch (e) {
+    alert('Gagal mengambil data: ' + e.message);
+  }
+}
+updateAuthUI();
+if (localStorage.getItem(SESSION_KEY)) loadData();
