@@ -20,33 +20,23 @@ const el = (tag, attrs={}, kids=[]) => {
 const fmtIDR = (n) => (n||0).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0});
 
 // ==== Format ribuan saat mengetik (titik) ====
-// "12.345,67" -> 12345.67 (Number)
 function parseIDR(str){
   if (!str) return 0;
   const cleaned = String(str).replace(/\./g,'').replace(',', '.').replace(/[^\d.]/g,'');
   const n = Number(cleaned);
   return isNaN(n) ? 0 : n;
 }
-// "12345.67" -> "12.345,67" (string)
 function formatThousandsInput(str){
-  str = String(str||'').replace(/[^\d,]/g,''); // hanya angka & koma
+  str = String(str||'').replace(/[^\d,]/g,'');
   const parts = str.split(',');
   let int = parts[0].replace(/^0+(?=\d)/,'');
   int = int.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
   return parts.length>1 ? `${int},${parts[1].slice(0,2)}` : int;
 }
-function formatFromNumber(n){
-  // tampilkan 0 desimal (sesuai tampilan IDR di app)
-  return Math.round(n).toLocaleString('id-ID');
-}
+function formatFromNumber(n){ return Math.round(n).toLocaleString('id-ID'); }
 function attachThousandsMask(input){
-  input.addEventListener('input', ()=>{
-    const v = input.value;
-    input.value = formatThousandsInput(v);
-  });
-  input.addEventListener('focus', ()=> {
-    if (!input.value) input.value = '';
-  });
+  input.addEventListener('input', ()=>{ input.value = formatThousandsInput(input.value); });
+  input.addEventListener('focus', ()=>{ if (!input.value) input.value = ''; });
 }
 
 // ====== Auth UI ======
@@ -67,60 +57,51 @@ $('#do-login')?.addEventListener('click', async ()=>{
     if (!r.ok) return alert(j.error || 'Login gagal');
     if (!j.ok) return alert('PIN salah');
     localStorage.setItem(SESSION_KEY,'ok');
-    updateAuthUI();
-    loadData();
+    updateAuthUI(); loadData();
   } catch (e) { alert('Login gagal: ' + e.message); }
 });
-$('#btn-logout')?.addEventListener('click', ()=>{
-  localStorage.removeItem(SESSION_KEY);
-  updateAuthUI();
-});
+$('#btn-logout')?.addEventListener('click', ()=>{ localStorage.removeItem(SESSION_KEY); updateAuthUI(); });
 
 // ====== Data I/O ======
 async function getData() {
   const r = await fetch(API, { method:'GET' });
   let j = {};
   try { j = await r.json(); } catch {}
-  if (!r.ok) {
-    const msg = (j && j.error) ? j.error : `HTTP ${r.status}`;
-    throw new Error(msg);
-  }
+  if (!r.ok) throw new Error((j && j.error) ? j.error : `HTTP ${r.status}`);
   return j;
 }
 async function addTx(tx) {
   const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
   const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || 'Gagal simpan');
-  return j;
+  if (!r.ok) throw new Error(j.error || 'Gagal simpan'); return j;
 }
 async function updateTx(tx) {
   const r = await fetch(API, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(tx) });
   const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || 'Gagal update');
-  return j;
+  if (!r.ok) throw new Error(j.error || 'Gagal update'); return j;
 }
 async function deleteTx(id) {
   const r = await fetch(API, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id}) });
   const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || 'Gagal hapus');
-  return j;
+  if (!r.ok) throw new Error(j.error || 'Gagal hapus'); return j;
 }
 
-// ====== Render ======
+// ====== Helpers data ======
 function computeSums(list) {
   const sumIn = list.filter(t=>t.type==='Pemasukan').reduce((a,b)=>a+b.amount,0);
   const sumOut= list.filter(t=>t.type==='Pengeluaran').reduce((a,b)=>a+b.amount,0);
   return { sumIn, sumOut, balance: sumIn - sumOut };
 }
 function monthKey(d){ return (d||'').slice(0,7); }
-function listMonths(list){
-  const s = new Set(list.map(t=>monthKey(t.date)));
-  return Array.from(s).filter(Boolean).sort().reverse();
+function listMonths(list){ const s = new Set(list.map(t=>monthKey(t.date))); return Array.from(s).filter(Boolean).sort().reverse(); }
+function applyFilter(list){ return (currentMonthFilter==='ALL') ? list : list.filter(t=>monthKey(t.date)===currentMonthFilter); }
+function toIndoMonth(ym){
+  const [y,m]=ym.split('-').map(Number);
+  const id=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return `${id[m]} ${y}`;
 }
-function applyFilter(list){
-  if (currentMonthFilter==='ALL') return list;
-  return list.filter(t=>monthKey(t.date)===currentMonthFilter);
-}
+
+// ====== Render Utama ======
 function render(){
   const filtered = applyFilter(state.transactions).sort((a,b)=> (a.date<b.date?1:-1));
   const {sumIn,sumOut,balance} = computeSums(filtered);
@@ -150,8 +131,7 @@ function render(){
         document.createTextNode(' '),
         btnSmallDanger('Hapus', async ()=>{
           if (!confirm('Hapus transaksi ini?')) return;
-          try { await deleteTx(t.id); await loadData(); }
-          catch(e){ alert(e.message); }
+          try { await deleteTx(t.id); await loadData(); } catch(e){ alert(e.message); }
         })
       ])
     ]);
@@ -163,11 +143,6 @@ function render(){
 }
 function btnSmall(txt, fn){ const b=el('button',{class:'btn',text:txt}); b.addEventListener('click',fn); return b;}
 function btnSmallDanger(txt, fn){ const b=el('button',{class:'btn danger',text:txt}); b.addEventListener('click',fn); return b;}
-function toIndoMonth(ym){
-  const [y,m]=ym.split('-').map(Number);
-  const id=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  return `${id[m]} ${y}`;
-}
 
 // ====== Modal Tambah/Edit ======
 const dlg = $('#modal-tx');
@@ -188,7 +163,7 @@ function openEdit(t){
   $('#tx-id').value = t.id;
   $('#tx-type').value = t.type;
   $('#tx-note').value = t.note || '';
-  $('#tx-amount').value = formatFromNumber(t.amount); // tampil ribuan
+  $('#tx-amount').value = formatFromNumber(t.amount);
   $('#tx-date').value = t.date;
   $('#form-error').hidden = true;
   dlg.showModal();
@@ -200,19 +175,18 @@ $('#form-tx')?.addEventListener('submit', async (e)=>{
     id: $('#tx-id').value || undefined,
     type: $('#tx-type').value,
     note: $('#tx-note').value,
-    amount: parseIDR($('#tx-amount').value), // pastikan angka bersih
+    amount: parseIDR($('#tx-amount').value),
     date: $('#tx-date').value
   };
   if (!data.amount || data.amount <= 0) return showFormError('Jumlah harus lebih dari 0');
   try {
     if (data.id) await updateTx(data); else await addTx(data);
-    dlg.close();
-    await loadData();
+    dlg.close(); await loadData();
   } catch (err) { showFormError(err.message); }
 });
 function showFormError(msg){ const e=$('#form-error'); e.textContent=msg; e.hidden=false; }
 
-// aktifkan masker ribuan untuk semua input.berclass=thousands
+// masker ribuan
 attachThousandsMask($('#tx-amount'));
 
 // ====== Kalkulator ======
@@ -230,18 +204,21 @@ document.querySelectorAll('.calc-grid button').forEach(b=>{
 });
 
 // ====== Filter Bulan ======
-$('#filter-month')?.addEventListener('change', (e)=>{
-  currentMonthFilter = e.target.value;
-  render();
-});
+$('#filter-month')?.addEventListener('change', (e)=>{ currentMonthFilter = e.target.value; render(); });
 
 // ====== Analitik (Chart.js) ======
 let chartBalance, chartMonthly, chartShare;
 Chart.defaults.color = '#e7f5ee';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.12)';
 
+function toggleNoData(canvasId, isEmpty){
+  const wrap = document.querySelector(`#${canvasId}`).parentElement;
+  const nd = wrap.querySelector('.nodata');
+  if (isEmpty) nd.classList.remove('hidden'); else nd.classList.add('hidden');
+}
+
 function updateAnalytics(list){
-  // --- saldo kumulatif per hari ---
+  // ---- saldo kumulatif (berdasarkan filter) ----
   const byDate = {};
   list.forEach(t=>{
     const key = t.date;
@@ -253,7 +230,7 @@ function updateAnalytics(list){
   const saldoSeries = dates.map(d=> (run += byDate[d]));
   drawBalanceChart(dates, saldoSeries);
 
-  // --- pemasukan vs pengeluaran per bulan (pakai semua transaksi, bukan cuma filter? -> sesuai filter) ---
+  // ---- pemasukan vs pengeluaran per bulan (berdasarkan filter) ----
   const byMonth = {};
   list.forEach(t=>{
     const m = monthKey(t.date);
@@ -265,11 +242,11 @@ function updateAnalytics(list){
   const outs= months.map(m=>byMonth[m].out);
   drawMonthlyChart(months.map(toIndoMonth), ins, outs);
 
-  // --- share total ---
+  // ---- komposisi total ----
   const {sumIn, sumOut} = computeSums(list);
   drawShareChart([sumIn, sumOut]);
 
-  // --- ringkasan tabel ---
+  // ---- ringkasan tabel ----
   const tbody = $('#summary-body');
   tbody.innerHTML = '';
   months.forEach(m=>{
@@ -286,19 +263,19 @@ function updateAnalytics(list){
 
 function drawBalanceChart(labels, data){
   const ctx = $('#chartBalance');
+  toggleNoData('chartBalance', labels.length===0);
   chartBalance?.destroy();
   chartBalance = new Chart(ctx, {
     type:'line',
     data:{ labels, datasets:[{
       label:'Saldo kumulatif',
       data,
-      tension:.25,
-      fill:true,
-      backgroundColor:'rgba(34,197,94,.15)',
-      borderColor:'#22c55e',
+      tension:.25, fill:true,
+      backgroundColor:'rgba(34,197,94,.15)', borderColor:'#22c55e',
       pointRadius:0
     }]},
     options:{
+      maintainAspectRatio:false,
       plugins:{ tooltip:{ callbacks:{ label: c=> fmtIDR(c.parsed.y) } } },
       scales:{ y:{ ticks:{ callback:v=> (v).toLocaleString('id-ID') } } }
     }
@@ -306,6 +283,7 @@ function drawBalanceChart(labels, data){
 }
 function drawMonthlyChart(labels, inData, outData){
   const ctx = $('#chartMonthly');
+  toggleNoData('chartMonthly', labels.length===0);
   chartMonthly?.destroy();
   chartMonthly = new Chart(ctx, {
     type:'bar',
@@ -317,7 +295,7 @@ function drawMonthlyChart(labels, inData, outData){
       ]
     },
     options:{
-      responsive:true,
+      maintainAspectRatio:false,
       plugins:{ tooltip:{ callbacks:{ label:c=> `${c.dataset.label}: ${fmtIDR(c.parsed.y)}` } } },
       scales:{ y:{ ticks:{ callback:v=> (v).toLocaleString('id-ID') } } }
     }
@@ -325,13 +303,20 @@ function drawMonthlyChart(labels, inData, outData){
 }
 function drawShareChart(values){
   const ctx = $('#chartShare');
+  const empty = (values[0]||0)+(values[1]||0)===0;
+  toggleNoData('chartShare', empty);
   chartShare?.destroy();
   chartShare = new Chart(ctx, {
     type:'doughnut',
-    data:{ labels:['Pemasukan','Pengeluaran'], datasets:[{ data:values, backgroundColor:['#22c55e','#ff6b6b'] }] },
-    options:{ plugins:{ tooltip:{ callbacks:{ label:c=> `${c.label}: ${fmtIDR(c.parsed)}` } } } }
+    data:{ labels:['Pemasukan','Pengeluaran'], datasets:[{ data: values, backgroundColor:['#22c55e','#ff6b6b'] }] },
+    options:{ maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label:c=> `${c.label}: ${fmtIDR(c.parsed)}` } } } }
   });
 }
+window.addEventListener('resize', ()=>{ // redraw sederhana saat layar berubah
+  if (chartBalance) chartBalance.resize();
+  if (chartMonthly) chartMonthly.resize();
+  if (chartShare) chartShare.resize();
+});
 
 // ====== Boot ======
 async function loadData() {
@@ -339,9 +324,7 @@ async function loadData() {
     const data = await getData();
     state = { transactions: Array.isArray(data.transactions)? data.transactions : [] };
     render();
-  } catch (e) {
-    alert('Gagal mengambil data: ' + e.message);
-  }
+  } catch (e) { alert('Gagal mengambil data: ' + e.message); }
 }
 updateAuthUI();
 if (localStorage.getItem(SESSION_KEY)) loadData();
