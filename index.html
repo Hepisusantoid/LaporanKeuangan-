@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Laporan Keuangan</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -17,18 +17,19 @@
   </header>
 
   <main class="container">
-    <!-- LOGIN -->
+    <!-- ============ LOGIN ============ -->
     <section id="screen-login" class="card">
       <h2>Selamat Datang</h2>
       <p>Masuk untuk melanjutkan</p>
       <div class="row">
-        <input id="pin" type="password" placeholder="PIN Admin (4-8 digit)">
+        <input id="pin" type="password" inputmode="numeric" placeholder="PIN Admin (4-8 digit)" />
         <button id="do-login" class="btn primary">Masuk</button>
       </div>
-      <small class="muted">PIN aman: diset di Environment Vercel.</small>
+      <p class="muted">PIN aman: diset di Environment Vercel (tanpa hardcode di client).</p>
+      <p id="login-error" class="error" hidden></p>
     </section>
 
-    <!-- APP -->
+    <!-- ============ APP ============ -->
     <section id="screen-app" class="hidden">
       <div class="grid-3">
         <div class="card stat"><h3>Total Pemasukan</h3><div id="sum-in">Rp 0</div></div>
@@ -45,6 +46,7 @@
         <button id="open-calc" class="btn">Kalkulator</button>
       </div>
 
+      <!-- Tabel transaksi -->
       <section id="block-transaksi" class="card table-block">
         <h2>Riwayat Transaksi</h2>
         <div class="table-wrap limited">
@@ -61,65 +63,46 @@
         <div class="row end"><button class="btn link toggle-full">Lihat penuh</button></div>
       </section>
 
-      <!-- ANALISIS -->
+      <!-- Analisis -->
       <section class="card">
         <h2>Analisis & Diagram</h2>
 
         <div class="charts-grid">
           <div class="card">
             <h3>Saldo Kumulatif (berdasarkan filter)</h3>
-            <div class="chart-wrap">
-              <canvas id="chartBalance"></canvas>
-              <div class="nodata">Belum ada data</div>
-            </div>
+            <div class="chart-wrap"><canvas id="chartBalance"></canvas><div class="nodata">Belum ada data</div></div>
           </div>
 
           <div class="card">
             <h3>Pemasukan vs Pengeluaran per Bulan</h3>
-            <div class="chart-wrap">
-              <canvas id="chartMonthly"></canvas>
-              <div class="nodata">Belum ada data</div>
-            </div>
+            <div class="chart-wrap"><canvas id="chartMonthly"></canvas><div class="nodata">Belum ada data</div></div>
           </div>
 
           <div class="card">
             <h3>Komposisi Total (dengan Persentase)</h3>
-            <div class="chart-wrap">
-              <canvas id="chartShare"></canvas>
-              <div class="nodata">Belum ada data</div>
-            </div>
+            <div class="chart-wrap"><canvas id="chartShare"></canvas><div class="nodata">Belum ada data</div></div>
           </div>
         </div>
 
-        <!-- GRAFIK LINE GABUNGAN (In / Out / Saldo) -->
+        <!-- Grafik line gabungan -->
         <div class="card">
           <h3>Tren Bulanan — Garis (Pemasukan, Pengeluaran, Saldo)</h3>
-          <div class="chart-wrap tall">
-            <canvas id="chartMonthlyLine"></canvas>
-            <div class="nodata">Belum ada data</div>
-          </div>
+          <div class="chart-wrap tall"><canvas id="chartMonthlyLine"></canvas><div class="nodata">Belum ada data</div></div>
         </div>
 
         <div class="charts-grid">
           <div class="card">
             <h3>Komposisi Sektor — Pemasukan</h3>
-            <div class="chart-wrap">
-              <canvas id="chartIncomeSector"></canvas>
-              <div class="nodata">Belum ada data</div>
-            </div>
+            <div class="chart-wrap"><canvas id="chartIncomeSector"></canvas><div class="nodata">Belum ada data</div></div>
           </div>
-
           <div class="card">
             <h3>Komposisi Sektor — Pengeluaran</h3>
-            <div class="chart-wrap">
-              <canvas id="chartExpenseSector"></canvas>
-              <div class="nodata">Belum ada data</div>
-            </div>
+            <div class="chart-wrap"><canvas id="chartExpenseSector"></canvas><div class="nodata">Belum ada data</div></div>
           </div>
         </div>
       </section>
 
-      <!-- LAPORAN -->
+      <!-- Laporan ringkas -->
       <section class="card">
         <h2>Laporan Ringkas</h2>
         <div class="tabs">
@@ -172,7 +155,7 @@
     </section>
   </main>
 
-  <!-- MODAL Tambah/Edit -->
+  <!-- Modal transaksi -->
   <dialog id="modal-tx" class="modal">
     <form method="dialog" id="form-tx" class="card">
       <h3 id="modal-title">Tambah Transaksi Baru</h3>
@@ -185,13 +168,13 @@
           </select>
         </label>
         <label>Keterangan
-          <input id="tx-note" type="text" placeholder="contoh: Jual gabah">
+          <input id="tx-note" type="text" placeholder="contoh: Jual gabah" />
         </label>
       </div>
 
       <div class="row form-row">
         <label>Sektor
-          <input id="tx-sector" list="sector-list" placeholder="contoh: Pertanian / Perdagangan">
+          <input id="tx-sector" list="sector-list" placeholder="contoh: Pertanian / Perdagangan" />
           <datalist id="sector-list">
             <option value="Pertanian"></option><option value="Perdagangan"></option>
             <option value="Transportasi"></option><option value="Telekomunikasi"></option>
@@ -203,14 +186,14 @@
           </datalist>
         </label>
         <label>Jumlah
-          <input id="tx-amount" class="thousands" type="text" inputmode="numeric" placeholder="0">
+          <input id="tx-amount" class="thousands" type="text" inputmode="numeric" placeholder="0" />
         </label>
         <label>Tanggal
-          <input id="tx-date" type="date" required>
+          <input id="tx-date" type="date" required />
         </label>
       </div>
 
-      <input id="tx-id" type="hidden">
+      <input id="tx-id" type="hidden" />
       <div class="row end">
         <button type="button" id="btn-cancel" class="btn">Batal</button>
         <button type="submit" class="btn primary">Simpan</button>
@@ -219,23 +202,24 @@
     </form>
   </dialog>
 
-  <!-- MODAL Kalkulator -->
+  <!-- Modal kalkulator -->
   <dialog id="modal-calc" class="modal">
     <div class="card">
       <h3>Kalkulator</h3>
-      <input id="calc-display" class="calc-display" readonly value="0">
+      <input id="calc-display" class="calc-display" readonly value="0" />
       <div class="calc-grid">
         <button>7</button><button>8</button><button>9</button><button>/</button>
         <button>4</button><button>5</button><button>6</button><button>*</button>
         <button>1</button><button>2</button><button>3</button><button>-</button>
         <button>0</button><button>.</button><button>⌫</button><button>+</button>
-        <button class="wide">=</button>
-        <button class="wide" data-clear> C </button>
+        <button class="wide">=</button><button class="wide" data-clear>C</button>
       </div>
       <div class="row end"><button id="close-calc" class="btn">Tutup</button></div>
     </div>
   </dialog>
 
-  <script src="script.js" defer></script>
+  <!-- penting: login.js harus dimuat -->
+  <script src="login.js?v=2" defer></script>
+  <script src="script.js?v=2" defer></script>
 </body>
-        </html>
+  </html>
