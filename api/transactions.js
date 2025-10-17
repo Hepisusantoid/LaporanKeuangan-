@@ -1,7 +1,6 @@
 // /api/transactions.js
-// Proxy aman ke JSONBin (format kompatibel) — TANPA pembatasan saldo.
-// - Baca data: bisa array [] langsung ATAU { transactions: [] }
-// - Simpan data: SELALU sebagai { transactions: [...] }
+// JSONBin proxy — kompatibel format lama/baru, menyimpan field `sector`,
+// dan tidak membatasi saldo (pengeluaran boleh melebihi saldo).
 
 export default async function handler(req, res) {
   // CORS
@@ -26,7 +25,7 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
     'X-Master-Key': MASTER,
     'X-Access-Key': MASTER,
-    'X-Bin-Meta': 'false', // GET → kembalikan record langsung
+    'X-Bin-Meta': 'false', // GET akan kembalikan record langsung
   };
 
   try {
@@ -35,14 +34,13 @@ export default async function handler(req, res) {
       return res.status(200).json({ transactions: list });
     }
 
-    // Ambil state terkini untuk operasi tulis
+    // Ambil state untuk operasi tulis
     const { list } = await loadList(base, headers);
 
     if (req.method === 'POST') {
       const body = await readJSON(req);
       const tx = sanitizeTx(body);
-      // >>> TIDAK ADA pembatasan: pengeluaran boleh melebihi saldo
-      list.push(tx);
+      list.push(tx); // tidak ada pembatasan saldo
       await saveList(base, headers, list);
       return res.status(201).json({ ok: true, tx });
     }
@@ -58,10 +56,9 @@ export default async function handler(req, res) {
       const updated = {
         ...list[idx],
         ...body,
-        amount: Number(body?.amount ?? list[idx].amount)
+        amount: Number(body?.amount ?? list[idx].amount),
+        sector: body?.sector ?? list[idx].sector ?? '' // jaga konsistensi
       };
-
-      // >>> TIDAK ADA pembatasan saldo pada update
       list[idx] = updated;
       await saveList(base, headers, list);
       return res.status(200).json({ ok: true, updated });
@@ -70,9 +67,8 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const { id } = await readJSON(req);
       if (!id) return res.status(400).json({ error: 'id required' });
-      const before = list.length;
       const next = list.filter(t => t.id !== id);
-      if (next.length === before) return res.status(404).json({ error: 'not found' });
+      if (next.length === list.length) return res.status(404).json({ error: 'not found' });
       await saveList(base, headers, next);
       return res.status(200).json({ ok: true });
     }
@@ -93,9 +89,10 @@ async function readJSON(req) {
 function sanitizeTx(body){
   return {
     id: body?.id || rid(),
-    type: body?.type,                  // 'Pemasukan' | 'Pengeluaran'
+    type: body?.type,                         // 'Pemasukan' | 'Pengeluaran'
     note: body?.note || '',
-    amount: Number(body?.amount || 0), // angka murni
+    sector: body?.sector || '',               // <<— sektor baru (opsional)
+    amount: Number(body?.amount || 0),        // angka murni
     date: body?.date || new Date().toISOString().slice(0,10)
   };
 }
@@ -110,15 +107,16 @@ async function loadList(base, headers){
   const r = await fetch(`${base}/latest`, { headers, cache:'no-store' });
   if (!r.ok) throw new Error(`GET ${r.status}: ${await r.text()}`);
   const j = await r.json();
-  // Jika X-Bin-Meta:false → j = record langsung; kalau true → {record:...}
   const record = (j && typeof j === 'object' && 'record' in j) ? j.record : j;
-  return { list: extractList(record) };
+  // normalisasi agar tiap item minimal punya field sector
+  const list = extractList(record).map(t => ({ ...t, sector: t.sector ?? '' }));
+  return { list };
 }
 async function saveList(base, headers, list){
-  // Selalu simpan sebagai objek standar
+  // simpan konsisten sebagai { transactions:[...] }
   const r = await fetch(base, {
     method:'PUT', headers, body: JSON.stringify({ transactions: list })
   });
   if (!r.ok) throw new Error(`PUT ${r.status}: ${await r.text()}`);
   return r.json();
-}
+    }
