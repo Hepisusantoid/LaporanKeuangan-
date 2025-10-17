@@ -1,259 +1,149 @@
-/* =========================================================
-   Laporan Keuangan — style.css (MOBILE-ONLY, PREMIUM)
-   Tema gelap-hijau neon • Card glossy • Bottom-sheet modal
-   Tabel → kartu rapi • Tap targets besar • Aksen kontras
-   ========================================================= */
-
-/* ============== Theme Tokens ============== */
+/* ========== THEME (Mobile premium) ========== */
 :root{
-  --bg:#070b09;                 /* latar utama */
-  --bg-elev:#0b1210;            /* elevasi */
-  --glass:rgba(255,255,255,.03);/* efek kaca */
-
-  --txt:#eaf6ef;                /* teks utama */
-  --muted:#cfe7da;              /* teks sekunder */
-  --muted-2:#a8c7b6;
-
-  --line:#1e2c25;               /* garis/batas */
-  --line-2:#263830;
-
-  --primary:#21df7a;            /* hijau neon */
-  --primary-2:#12c766;
-  --danger:#ff6b6b;
-  --info:#38bdf8;
-
+  --bg:#070b09; --bg-elev:#0b1210; --glass:rgba(255,255,255,.03);
+  --txt:#eaf6ef; --muted:#cfe7da; --muted-2:#a8c7b6;
+  --primary:#21df7a; --primary-2:#12c766; --danger:#ff6b6b; --info:#38bdf8;
   --r-lg:18px; --r-md:14px; --r-sm:12px;
-  --shadow:0 18px 40px rgba(0,0,0,.35);
-  --pad:14px;
-  --container: 640px;
+  --shadow:0 18px 40px rgba(0,0,0,.35); --container:640px; --pad:14px;
 }
-
-/* ============== Base (mobile-first) ============== */
-*{box-sizing:border-box}
-html,body{height:100%}
-html{scroll-behavior:smooth}
+*{box-sizing:border-box} html,body{height:100%} html{scroll-behavior:smooth}
 body{
-  margin:0;
-  font:15.5px/1.58 system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial;
-  color:var(--txt);
+  margin:0; font:15.5px/1.58 system-ui,Inter,Roboto,Arial; color:var(--txt);
   background:
     radial-gradient(800px 440px at 100% -10%, rgba(33,223,122,.08), transparent 60%),
     radial-gradient(700px 520px at -10% 0, rgba(33,223,122,.05), transparent 60%),
     var(--bg);
-  -webkit-tap-highlight-color:transparent;
-  padding-bottom:env(safe-area-inset-bottom);
+  -webkit-tap-highlight-color:transparent; padding-bottom:env(safe-area-inset-bottom);
 }
-.hidden{display:none!important}
-.muted{color:var(--muted)}
-.right{text-align:right}
+.hidden{display:none!important} .muted{color:var(--muted)} .right{text-align:right}
 
-/* ============== App Bar / Header ============== */
+/* Appbar */
 .appbar{
-  position:sticky; top:0; z-index:50;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 16px;
-  background:linear-gradient(180deg, rgba(9,14,12,.95), rgba(9,14,12,.76));
-  border-bottom:1px solid rgba(255,255,255,.06);
-  backdrop-filter: blur(10px);
+  position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center;
+  padding:12px 16px; background:linear-gradient(180deg, rgba(9,14,12,.95), rgba(9,14,12,.76));
+  border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter:blur(10px);
 }
-.appbar h1{
-  margin:0; font-size:20px; font-weight:800; letter-spacing:.2px;
-  text-shadow:0 1px 0 #05100a;
-}
+.appbar h1{margin:0; font-size:20px; font-weight:800; letter-spacing:.2px; text-shadow:0 1px 0 #05100a}
 
-/* ============== Layout Containers (mobile) ============== */
 .container{max-width:var(--container); margin:16px auto; padding:0 14px}
-.grid{display:grid; gap:12px}
-.grid.stats{grid-template-columns:1fr;}
+.grid{display:grid; gap:12px} .grid.stats{grid-template-columns:1fr}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.row.end{justify-content:flex-end} .spacer{flex:1}
 
-/* ============== Card / Section ============== */
+/* Card & Stat */
 .card{
   border-radius:var(--r-lg);
-  background:
-    linear-gradient(180deg, var(--glass), rgba(255,255,255,.01)),
-    var(--bg-elev);
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:var(--shadow);
-  padding:var(--pad);
-  margin-bottom:12px;
+  background:linear-gradient(180deg, var(--glass), rgba(255,255,255,.01)), var(--bg-elev);
+  border:1px solid rgba(255,255,255,.10); box-shadow:var(--shadow); padding:var(--pad); margin-bottom:12px;
 }
-.card h2{margin:4px 0 10px}
-.card h3{margin:2px 0 8px; color:var(--muted-2)}
-
-/* ============== Stat Badges ============== */
-.stat{
-  background:
-    linear-gradient(180deg, rgba(33,223,122,.08), rgba(33,223,122,.02)),
-    var(--bg-elev);
-  border:1px solid rgba(33,223,122,.25);
-  border-radius:16px; padding:12px;
-}
+.card h2{margin:4px 0 10px} .card h3{margin:2px 0 8px; color:var(--muted-2)}
+.stat{background:linear-gradient(180deg, rgba(33,223,122,.08), rgba(33,223,122,.02)), var(--bg-elev);
+  border:1px solid rgba(33,223,122,.25); border-radius:16px; padding:12px}
 .stat h3{margin:0 0 6px; font-weight:700; color:#c0ead6}
-.stat .val{
-  font-size:26px; font-weight:850; letter-spacing:.2px;
-  color:#d6ffe9; text-shadow:0 1px 0 #08150e;
-}
+.stat .val{font-size:26px; font-weight:850; letter-spacing:.2px; color:#d6ffe9; text-shadow:0 1px 0 #08150e}
 
-/* ============== Inputs & Buttons ============== */
+/* Inputs & Buttons */
 label{display:block; margin:8px 0 6px; color:#d8eee5; font-weight:600}
-input, select, textarea{
-  width:100%; background:#0a110f; color:var(--txt);
-  border:1px solid rgba(255,255,255,.16);
-  border-radius:12px; padding:11px 12px; outline:none;
+input,select,textarea{
+  width:100%; background:#0a110f; color:var(--txt); border:1px solid rgba(255,255,255,.16);
+  border-radius:12px; padding:11px 12px; outline:none
 }
 input::placeholder{color:#9ec4b1}
-input:focus, select:focus, textarea:focus{box-shadow:0 0 0 3px rgba(33,223,122,.28)}
-
-.btn{
-  appearance:none; border:none; cursor:pointer;
-  border-radius:14px; padding:11px 14px;
-  background:#15221c; color:var(--txt);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 8px 24px rgba(0,0,0,.28);
-  transition:transform .15s ease, background .2s ease;
-}
-.btn:hover{transform:translateY(-1px); background:#182820}
-.btn:active{transform:translateY(0)}
-.btn.primary{
-  background:linear-gradient(135deg,var(--primary),var(--primary-2));
-  color:#06130b; font-weight:800; letter-spacing:.2px;
-  border:0;
-}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(33,223,122,.28)}
+.btn{appearance:none; border:none; cursor:pointer; border-radius:14px; padding:11px 14px;
+  background:#15221c; color:var(--txt); border:1px solid rgba(255,255,255,.12); box-shadow:0 8px 24px rgba(0,0,0,.28);
+  transition:transform .15s ease, background .2s ease}
+.btn:hover{transform:translateY(-1px); background:#182820} .btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#06130b; font-weight:800; letter-spacing:.2px; border:0}
 .btn.danger{background:#2a1717; color:#ffdede; border-color:#3a2121}
 .btn.link{background:transparent; border:0; color:#bff3d8; text-decoration:underline; padding:6px 4px; box-shadow:none}
 
-/* Toolbar (aksi utama) – dibuat sticky di mobile */
+/* Toolbar sticky bawah */
 .toolbar{
-  position:sticky; bottom:0; z-index:45;
-  display:flex; gap:10px; padding:10px 12px;
+  position:sticky; bottom:0; z-index:45; display:flex; gap:10px; padding:10px 12px;
   background:linear-gradient(180deg, rgba(8,13,11,.05), rgba(8,13,11,.85));
-  backdrop-filter:blur(8px);
-  border-top:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(8px); border-top:1px solid rgba(255,255,255,.08)
 }
 .toolbar .btn{flex:1}
 
-/* ============== Tabs ============== */
+/* Tabs */
 .tabs{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 10px}
-.tab{
-  padding:8px 10px; border-radius:12px; cursor:pointer;
-  background:#121c17; color:#d8f3e7; border:1px solid rgba(255,255,255,.12);
-}
+.tab{padding:8px 10px; border-radius:12px; cursor:pointer; background:#121c17; color:#d8f3e7; border:1px solid rgba(255,255,255,.12)}
 .tab:hover{background:#16251f}
-.tab.active{
-  background:linear-gradient(135deg,#182f23,#12241c); color:#fff;
-  border-color:rgba(33,223,122,.35);
-  box-shadow:inset 0 0 0 1px rgba(33,223,122,.35);
-}
-.tabpane{display:none}
-.tabpane.active{display:block}
+.tab.active{background:linear-gradient(135deg,#182f23,#12241c); color:#fff; border-color:rgba(33,223,122,.35); box-shadow:inset 0 0 0 1px rgba(33,223,122,.35)}
+.tabpane{display:none} .tabpane.active{display:block}
 
-/* ============== Table → Mobile Cards ============== */
+/* ===== Tables → Mobile Cards (scoped) ===== */
 .table-block .toggle-full{margin-top:8px}
-
-.table-wrap{
-  border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.10);
-  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-}
+.table-wrap{border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01))}
 .table-wrap.limited{max-height:360px; overflow:auto}
 
-.table{width:100%; border-collapse:collapse}
-.table thead{display:none} /* sembunyikan header di HP */
+/* Riwayat Transaksi */
+.tbl-transactions .table{width:100%; border-collapse:collapse}
+.tbl-transactions .table thead{display:none}
+.tbl-transactions .table tbody tr{display:block; background:#0e1613; margin:10px; border-radius:12px; border:1px solid rgba(255,255,255,.10); box-shadow:0 10px 24px rgba(0,0,0,.24); padding:10px}
+.tbl-transactions .table tbody tr:nth-child(even){background:#0c1411}
+.tbl-transactions .table tbody td{display:flex; justify-content:space-between; gap:12px; padding:6px 4px; border-bottom:1px dashed rgba(255,255,255,.08)}
+.tbl-transactions .table tbody td:last-child{border-bottom:0; align-items:center}
+.tbl-transactions .table tbody td .btn{padding:8px 10px}
+.tbl-transactions .table tbody td .btn + .btn{margin-left:6px}
+/* label kolom transaksi */
+.tbl-transactions .table tbody td:nth-child(1)::before{content:"Tanggal"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(2)::before{content:"Keterangan"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(3)::before{content:"Sektor"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(4)::before{content:"Jenis"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(5)::before{content:"Jumlah"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(6)::before{content:"Aksi"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td::before{margin-right:12px}
 
-/* Baris menjadi kartu */
-.table tbody tr{
-  display:block;
-  background:#0e1613; margin:10px; border-radius:12px;
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:0 10px 24px rgba(0,0,0,.24);
-  padding:10px;
-}
-.table tbody tr:nth-child(even){background:#0c1411}
-.table tbody td{
-  display:flex; justify-content:space-between; gap:12px;
-  padding:6px 4px; border-bottom:1px dashed rgba(255,255,255,.08)
-}
-.table tbody td:last-child{border-bottom:0; align-items:center}
-.table tbody td .btn{padding:8px 10px}
-.table tbody td .btn + .btn{margin-left:6px}
+/* Laporan Ringkas */
+.tbl-report .table{width:100%; border-collapse:collapse}
+.tbl-report .table thead{display:none}
+.tbl-report .table tbody tr{display:block; background:#0f1714; margin:10px; border-radius:12px; border:1px solid rgba(255,255,255,.10); box-shadow:0 10px 24px rgba(0,0,0,.22); padding:10px}
+.tbl-report .table tbody tr:nth-child(even){background:#0d1512}
+.tbl-report .table tbody td{display:flex; justify-content:space-between; gap:12px; padding:7px 6px; border-bottom:1px dashed rgba(255,255,255,.08)}
+.tbl-report .table tbody td:last-child{border-bottom:0}
+/* label kolom laporan */
+.tbl-report .table tbody td:nth-child(1)::before{content:"Periode"; color:var(--muted); font-weight:700}
+.tbl-report .table tbody td:nth-child(2)::before{content:"Pemasukan"; color:var(--muted); font-weight:700}
+.tbl-report .table tbody td:nth-child(3)::before{content:"Pengeluaran"; color:var(--muted); font-weight:700}
+.tbl-report .table tbody td:nth-child(4)::before{content:"Saldo"; color:var(--muted); font-weight:700}
+.tbl-report .table tbody td::before{margin-right:12px}
+.tbl-report .table tbody td:nth-child(n+2){font-weight:750; color:#dffaea; text-shadow:0 1px 0 #07110c}
+.tbl-report .table tbody td:nth-child(3){color:#ffd4d4}
 
-/* Label kolom (gunakan urutan kolom HTML) */
-.table tbody td:nth-child(1)::before{content:"Tanggal"; color:var(--muted); font-weight:600}
-.table tbody td:nth-child(2)::before{content:"Keterangan"; color:var(--muted); font-weight:600}
-.table tbody td:nth-child(3)::before{content:"Sektor"; color:var(--muted); font-weight:600}
-.table tbody td:nth-child(4)::before{content:"Jenis"; color:var(--muted); font-weight:600}
-.table tbody td:nth-child(5)::before{content:"Jumlah"; color:var(--muted); font-weight:600}
-.table tbody td:nth-child(6)::before{content:"Aksi"; color:var(--muted); font-weight:600}
-.table tbody td::before{margin-right:12px}
+/* Charts */
+.chart-wrap{position:relative; height:280px} .chart-wrap.tall{height:320px}
+.nodata{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#cfe7da; font-weight:800; opacity:.95}
 
-/* ============== Charts ============== */
-.chart-wrap{position:relative; height:280px}
-.chart-wrap.tall{height:320px}
-.nodata{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  color:#cfe7da; font-weight:800; opacity:.95;
-}
-
-/* ============== Modal → Bottom Sheet ============== */
+/* Modal bottom sheet */
 .modal{border:none; padding:0; background:transparent}
 .modal::backdrop{background:rgba(0,0,0,.58); backdrop-filter:blur(10px)}
 .modal .card{
-  width:100vw; height:92vh; margin:0; padding:var(--pad);
-  position:fixed; left:0; right:0; bottom:0;
-  border-radius:18px 18px 0 0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)),
-    #0c1411;
-  border:1px solid rgba(255,255,255,.14);
-  overflow:auto;
+  width:100vw; height:92vh; margin:0; padding:var(--pad); position:fixed; left:0; right:0; bottom:0;
+  border-radius:18px 18px 0 0; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)), #0c1411;
+  border:1px solid rgba(255,255,255,.14); overflow:auto
 }
-.modal .card::before{
-  content:''; display:block; width:46px; height:5px; border-radius:8px;
-  background:rgba(255,255,255,.22); margin:8px auto 6px;
-}
+.modal .card::before{content:''; display:block; width:46px; height:5px; border-radius:8px; background:rgba(255,255,255,.22); margin:8px auto 6px}
 .form-row{display:flex; flex-direction:column; gap:8px; margin-top:6px}
 .error{color:#ffb4b4; margin-top:6px}
 
-/* ============== Mini tables (laporan ringkas) ============== */
-.mini-table{width:100%; border-collapse:collapse}
+/* Mini table (desktop guard) */
 .mini-table th,.mini-table td{padding:8px 10px}
-.mini-table thead th{
-  position:sticky; top:0; background:#0f1714;
-  border-bottom:1px solid rgba(255,255,255,.12)
-}
-.mini-table tbody tr{border-bottom:1px dashed rgba(255,255,255,.08)}
-.mini-table tbody tr:nth-child(even){background:#0b1210}
 
-/* ============== Kalkulator ============== */
-.calc-display{
-  width:100%; font-size:22px; padding:10px 12px; text-align:right;
-  background:#0b1310; border:1px solid rgba(255,255,255,.14); border-radius:12px;
-}
+/* Kalkulator */
+.calc-display{width:100%; font-size:22px; padding:10px 12px; text-align:right; background:#0b1310; border:1px solid rgba(255,255,255,.14); border-radius:12px}
 .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px}
-.calc-grid button{
-  padding:12px 10px; border-radius:12px;
-  background:#12201a; color:var(--txt);
-  border:1px solid rgba(255,255,255,.12); font-weight:650;
-}
+.calc-grid button{padding:12px 10px; border-radius:12px; background:#12201a; color:var(--txt); border:1px solid rgba(255,255,255,.12); font-weight:650}
 .calc-grid button.wide{grid-column:span 2}
 
-/* ============== Badges, Tips, & Misc ============== */
-.badge{
-  display:inline-block; padding:4px 8px; border-radius:999px;
-  background:rgba(33,223,122,.12); color:#caffea; border:1px solid rgba(33,223,122,.45);
-  font-weight:700; font-size:12.5px;
-}
-.tip{color:#b9d1c5; font-size:13px}
+/* Focus & motion */
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid rgba(33,223,122,.55); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 
-/* ============== Focus & Motion ============== */
-.btn:focus-visible, input:focus-visible, select:focus-visible{
-  outline:2px solid rgba(33,223,122,.55); outline-offset:2px
-}
-@media (prefers-reduced-motion:reduce){
-  *{animation:none!important; transition:none!important}
-}
-
-/* ============== Desktop safeguard (opsional) ============== */
-@media (min-width: 601px){
-  body{max-width:480px; margin:0 auto; background-color:#000; }
-  .appbar, .container{max-width:520px; margin-left:auto; margin-right:auto}
+/* Desktop guard: tetap sempit */
+@media (min-width:601px){
+  body{max-width:520px; margin:0 auto; background-color:#000}
+  .appbar,.container{max-width:520px; margin-left:auto; margin-right:auto}
 }
