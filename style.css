@@ -1,108 +1,224 @@
+/* ---------------------------------------------------------
+   Laporan Keuangan — style.css (FULL, mobile-first & modern)
+   - Tema gelap hijau dengan kontras tinggi
+   - Safe area, sticky appbar, card berbayang lembut
+   - Tabel sticky header, scroll halus, tombol besar
+   - Modal gaya bottom-sheet saat layar kecil
+   - Kompatibel dengan HTML/script yang sudah kamu pakai
+---------------------------------------------------------- */
+
+/* ====== Tokens / Theme ====== */
 :root{
-  --bg:#0a0f0c; --bg-soft:#0d1511;
-  --card:#0f1613; --card-2:#121b17;
+  --bg:#0a0f0c;             /* latar hitam kehijauan */
+  --bg-soft:#0e1512;
+  --card:#0f1714;
+  --card-2:#131d18;
   --border:#1e2b25;
-  --text:#eef7f2; --muted:#c6e0d2; --muted-2:#98b7a7;
-  --green:#2fe07b; --green-2:#18b865; --red:#ff6b6b; --cyan:#38bdf8;
-  --radius:16px; --r-sm:12px; --shadow:0 12px 28px rgba(0,0,0,.28);
-  --container:1100px; --space:16px;
+
+  --text:#eef7f2;           /* teks utama */
+  --muted:#cde3d7;          /* teks sekunder */
+  --muted-2:#a8c2b5;
+
+  --green:#2fe07b;          /* aksen utama */
+  --green-2:#18b865;
+  --cyan:#38bdf8;
+  --red:#ff6b6b;
+  --orange:#f59e0b;
+
+  --radius:16px;
+  --r-sm:12px;
+  --shadow:0 14px 28px rgba(0,0,0,.28);
+
+  --container:1120px;
+  --space:16px;
 }
-*{box-sizing:border-box} html,body{height:100%} html{scroll-behavior:smooth}
+
+/* ====== Base ====== */
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-behavior:smooth}
 body{
-  margin:0; font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
+  margin:0;
+  font:15.5px/1.58 ui-sans-serif,system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
   color:var(--text);
   background:
-    radial-gradient(1000px 500px at 12% -10%, rgba(47,224,123,.09), transparent 60%),
-    radial-gradient(900px 600px at 88% 5%, rgba(47,224,123,.06), transparent 60%),
+    radial-gradient(1000px 520px at 10% -10%, rgba(47,224,123,.10), transparent 60%),
+    radial-gradient(900px 600px at 100% 0, rgba(47,224,123,.06), transparent 60%),
     var(--bg);
   -webkit-tap-highlight-color:transparent;
+  padding-bottom:env(safe-area-inset-bottom);
 }
-.hidden{display:none!important} .muted{color:var(--muted)}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+
+/* ====== AppBar ====== */
 .appbar{
-  position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 16px;
-  background:linear-gradient(180deg, rgba(15,22,19,.92), rgba(15,22,19,.7));
-  backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.06);
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 16px;
+  background:linear-gradient(180deg, rgba(15,22,19,.92), rgba(15,22,19,.78));
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
-h1{margin:0; font-weight:800; font-size:22px; letter-spacing:.2px}
+.appbar h1{margin:0; font-weight:800; font-size:22px; letter-spacing:.2px}
+
+/* ====== Layout ====== */
 .container{max-width:var(--container); margin:18px auto; padding:0 16px}
 .grid-3{display:grid; gap:var(--space); grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
-.row.end{justify-content:flex-end} .spacer{flex:1}
+.row.end{justify-content:flex-end}
+.spacer{flex:1}
+
+/* ====== Cards / Sections ====== */
 .card{
   background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:var(--radius); box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
   padding:14px; margin-bottom:16px;
 }
 .card h2{margin:6px 0 12px}
 .card h3{margin:4px 0 10px}
+
+/* ====== Stat Boxes ====== */
 .stat{background:linear-gradient(180deg,var(--card),var(--card-2))}
-.stat h3{margin:0 0 8px; color:var(--muted-2)}
+.stat h3{margin:0 0 8px; color:var(--muted-2); font-weight:700}
 .stat div{font-size:28px; font-weight:800; color:#c8f7de; text-shadow:0 1px 0 #0a0f0c}
+
+/* ====== Toolbar / Inputs ====== */
 .toolbar{display:flex; align-items:center; gap:12px; margin:8px 0 16px}
-input,select{
-  width:100%; background:#0c1411; color:var(--text);
-  border:1px solid rgba(255,255,255,.18); padding:10px 12px; border-radius:var(--r-sm); outline:none;
-}
-input::placeholder{color:#a9c7b7}
+
 label{color:#d9efe3; font-weight:600; display:flex; flex-direction:column; gap:6px; min-width:220px}
+input, select{
+  width:100%;
+  background:#0b1411; color:var(--text);
+  border:1px solid rgba(255,255,255,.18);
+  padding:11px 12px; border-radius:var(--r-sm); outline:none;
+}
+input::placeholder{color:#a7c3b4}
+input:focus, select:focus{box-shadow:0 0 0 3px rgba(47,224,123,.25)}
+small.muted{display:block;margin-top:6px}
+
+/* ====== Buttons ====== */
 .btn{
-  background:#17241f; color:var(--text);
+  background:#16241f; color:var(--text);
   padding:10px 14px; border:none; border-radius:12px; cursor:pointer;
   transition:.18s ease; box-shadow:0 6px 18px rgba(0,0,0,.22)
 }
-.btn:hover{transform:translateY(-1px); background:#1b2a24}
+.btn:hover{transform:translateY(-1px); background:#1a2a24}
 .btn:active{transform:translateY(0)}
 .btn:focus-visible{outline:2px solid rgba(47,224,123,.5); outline-offset:2px}
-.btn.primary{background:linear-gradient(135deg,var(--green),var(--green-2)); color:#05120b; font-weight:700}
+.btn.primary{
+  background:linear-gradient(135deg,var(--green),var(--green-2));
+  color:#05120b; font-weight:750; letter-spacing:.2px
+}
 .btn.danger{background:#2a1a1a}
 .btn.link{background:transparent; color:#bff3d6; text-decoration:underline; box-shadow:none; padding:6px 8px}
+
+/* ====== Tables ====== */
 .table-block .toggle-full{margin-top:8px}
 .table-wrap{width:100%; overflow:auto; border-radius:12px}
-.table-wrap.limited{max-height:330px; border:1px solid rgba(255,255,255,.07)}
+.table-wrap.limited{max-height:340px; border:1px solid rgba(255,255,255,.08)}
 .table{width:100%; border-collapse:separate; border-spacing:0; background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.00))}
 .table thead th{
-  position:sticky; top:0; z-index:1; background:#101814; color:#e7f6ee;
-  border-bottom:1px solid rgba(255,255,255,.08)
+  position:sticky; top:0; z-index:1;
+  background:#101814; color:#e7f6ee; font-weight:700;
+  border-bottom:1px solid rgba(255,255,255,.10)
 }
-.table th,.table td{padding:10px 12px}
+.table th,.table td{padding:10px 12px; vertical-align:top}
 .table tbody tr{border-bottom:1px solid rgba(255,255,255,.06)}
 .table tbody tr:nth-child(even){background:#0d1713}
 .table tbody tr:hover{background:#14231c}
 .table .right{text-align:right}
 .mini-table th,.mini-table td{padding:8px 10px}
+.table td:nth-child(2), .table td:nth-child(3){max-width:280px; word-break:break-word}
+
+/* Scrollbar */
 .table-wrap::-webkit-scrollbar{height:10px; width:10px}
-.table-wrap::-webkit-scrollbar-thumb{background:#22342c; border-radius:10px}
+.table-wrap::-webkit-scrollbar-thumb{background:#23352d; border-radius:10px}
 .table-wrap::-webkit-scrollbar-track{background:#0b1310}
+
+/* ====== Tabs ====== */
 .tabs{display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap}
-.tab{background:#16231e; color:#d9f3e6; border:1px solid rgba(255,255,255,.1); padding:8px 12px; border-radius:10px; cursor:pointer}
+.tab{
+  background:#16231e; color:#d9f3e6;
+  border:1px solid rgba(255,255,255,.12);
+  padding:8px 12px; border-radius:10px; cursor:pointer; position:relative
+}
 .tab:hover{background:#1a2a24}
-.tab.active{background:linear-gradient(135deg,#1c3a2b,#15291f); color:#fff}
+.tab.active{
+  background:linear-gradient(135deg,#1c3a2b,#15291f); color:#fff
+}
+.tab.active::after{
+  content:''; position:absolute; left:12px; right:12px; bottom:-3px; height:3px;
+  border-radius:3px; background:linear-gradient(90deg,var(--green),var(--cyan))
+}
 .tabpane{display:none}
 .tabpane.active{display:block}
+
+/* ====== Charts ====== */
 .chart-wrap{position:relative; height:280px}
 .chart-wrap.tall{height:320px}
-.nodata{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#bcd6c8; font-weight:700; opacity:.95}
+.nodata{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#bcd6c8; font-weight:800; letter-spacing:.2px; opacity:.95
+}
 .charts-grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:8px}
+
+/* ====== Modal (bottom sheet on mobile) ====== */
 .modal{border:none; padding:0; background:transparent}
 .modal::backdrop{background:rgba(0,0,0,.6); backdrop-filter: blur(10px)}
 .modal .card{
-  width:min(760px, 96vw); margin:0; border-radius:16px; background:#0f1714;
+  width:min(780px, 96vw); margin:0;
+  border-radius:16px; background:#0f1714;
   border:1px solid rgba(255,255,255,.14);
 }
+.form-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:8px}
 .form-row label{flex:1; min-width:min(280px,100%)}
-.error{color:#ffb4b4; margin:6px 0 0}
-.calc-display{width:100%; font-size:22px; padding:10px 12px; text-align:right; background:#0c1512; border-radius:10px; border:1px solid rgba(255,255,255,.12)}
+.error{color:#ffb4b4; margin:8px 0 0}
+
+/* Mobile sheet */
+@media (max-width:540px){
+  .modal .card{
+    width:100vw; height:92vh; border-radius:18px 18px 0 0;
+    position:fixed; left:0; right:0; bottom:0;
+    overflow:auto; padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+  .modal .card::before{
+    content:''; display:block; width:42px; height:5px; border-radius:8px;
+    background:rgba(255,255,255,.20); margin:8px auto 6px;
+  }
+}
+
+/* ====== Kalkulator ====== */
+.calc-display{
+  width:100%; font-size:22px; padding:10px 12px; text-align:right;
+  background:#0c1512; border-radius:10px; border:1px solid rgba(255,255,255,.12)
+}
 .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px}
-.calc-grid button{padding:12px 10px; border-radius:12px; background:#15221c; color:var(--text); border:1px solid rgba(255,255,255,.08)}
+.calc-grid button{
+  padding:12px 10px; border-radius:12px; background:#15221c; color:var(--text);
+  border:1px solid rgba(255,255,255,.10); font-weight:600
+}
 .calc-grid button.wide{grid-column: span 2}
-@media (max-width: 820px){ .chart-wrap{height:240px} .chart-wrap.tall{height:280px} }
-@media (max-width: 640px){
-  body{font-size:14.5px}
+
+/* ====== Responsive tweaks ====== */
+@media (max-width: 860px){
+  .chart-wrap{height:260px} .chart-wrap.tall{height:300px}
+}
+@media (max-width: 720px){
+  body{font-size:15px}
   .appbar h1{font-size:20px}
   .grid-3{grid-template-columns:1fr}
-  select,input{min-width:unset}
-  .table-wrap.limited{max-height:300px}
+  .table-wrap.limited{max-height:320px}
+  .toolbar{gap:10px}
+  .btn{padding:11px 14px}
 }
-@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+@media (max-width: 420px){
+  .table td:nth-child(2), .table td:nth-child(3){max-width:200px}
+}
+
+/* ====== A11y ====== */
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important; animation:none!important}
+}
