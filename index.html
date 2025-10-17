@@ -49,7 +49,12 @@
         <h2>Riwayat Transaksi</h2>
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Jenis</th><th class="right">Jumlah</th><th>Aksi</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Tanggal</th><th>Keterangan</th><th>Sektor</th>
+                <th>Jenis</th><th class="right">Jumlah</th><th>Aksi</th>
+              </tr>
+            </thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -76,7 +81,7 @@
           </div>
 
           <div class="card">
-            <h3>Komposisi Total</h3>
+            <h3>Komposisi Total (dengan Persentase)</h3>
             <div class="chart-wrap">
               <canvas id="chartShare"></canvas>
               <div class="nodata">Belum ada data</div>
@@ -84,17 +89,17 @@
           </div>
 
           <div class="card">
-            <h3>Komposisi Kategori Pemasukan</h3>
+            <h3>Komposisi Sektor — Pemasukan</h3>
             <div class="chart-wrap">
-              <canvas id="chartIncomeCat"></canvas>
+              <canvas id="chartIncomeSector"></canvas>
               <div class="nodata">Belum ada data</div>
             </div>
           </div>
 
           <div class="card">
-            <h3>Komposisi Kategori Pengeluaran</h3>
+            <h3>Komposisi Sektor — Pengeluaran</h3>
             <div class="chart-wrap">
-              <canvas id="chartExpenseCat"></canvas>
+              <canvas id="chartExpenseSector"></canvas>
               <div class="nodata">Belum ada data</div>
             </div>
           </div>
@@ -166,6 +171,24 @@
         </label>
       </div>
       <div class="row">
+        <label>Sektor:
+          <input id="tx-sector" list="sector-list" placeholder="contoh: Pertanian / Perdagangan">
+          <datalist id="sector-list">
+            <option value="Pertanian"></option>
+            <option value="Perdagangan"></option>
+            <option value="Transportasi"></option>
+            <option value="Telekomunikasi"></option>
+            <option value="Utilitas"></option>
+            <option value="Pendidikan"></option>
+            <option value="Kesehatan"></option>
+            <option value="Hiburan"></option>
+            <option value="Hunian"></option>
+            <option value="Jasa"></option>
+            <option value="Teknologi"></option>
+            <option value="Pemerintahan"></option>
+            <option value="Lainnya"></option>
+          </datalist>
+        </label>
         <label>Jumlah:
           <input id="tx-amount" class="thousands" type="text" inputmode="numeric" placeholder="0">
         </label>
@@ -191,8 +214,9 @@
         <button>7</button><button>8</button><button>9</button><button>/</button>
         <button>4</button><button>5</button><button>6</button><button>*</button>
         <button>1</button><button>2</button><button>3</button><button>-</button>
-        <button>0</button><button>.</button><button>C</button><button>+</button>
+        <button>0</button><button>.</button><button>⌫</button><button>+</button>
         <button class="wide">=</button>
+        <button class="wide" data-clear> C </button>
       </div>
       <div class="row end"><button id="close-calc" class="btn">Tutup</button></div>
     </div>
@@ -200,4 +224,4 @@
 
   <script src="script.js" defer></script>
 </body>
-                </html>
+            </html>
