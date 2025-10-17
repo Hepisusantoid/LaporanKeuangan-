@@ -1,56 +1,36 @@
-/* ====== Design Tokens (Aksesibel) ====== */
+/* ====== Tokens ====== */
 :root{
-  /* Palette */
-  --bg:        #0a0f0c;        /* page background */
-  --bg-soft:   #0d1511;        /* large areas */
-  --card:      #0f1613;        /* surface/card */
-  --card-2:    #121b17;
-  --border:    #1e2b25;
-  --text:      #eaf6ef;        /* main text */
-  --muted:     #b9d1c3;        /* secondary text */
-  --muted-2:   #8fb19f;
+  --bg:#0a0f0c; --bg-soft:#0d1511;
+  --card:#0f1613; --card-2:#121b17;
+  --border:#1e2b25;
+  --text:#eef7f2; --muted:#c6e0d2; --muted-2:#98b7a7;
 
-  --green:     #2ce07a;        /* accent primary */
-  --green-2:   #16b865;        /* accent darker */
-  --red:       #ff6b6b;        /* negative */
+  --green:#2fe07b; --green-2:#18b865;
+  --red:#ff6b6b; --cyan:#38bdf8;
 
-  /* Elevation / radius / shadow */
-  --radius:    16px;
-  --radius-sm: 12px;
-  --shadow:    0 12px 28px rgba(0,0,0,.28);
-
-  /* Layout */
-  --container: 1100px;
-  --space:     16px;
+  --radius:16px; --r-sm:12px; --shadow:0 12px 28px rgba(0,0,0,.28);
+  --container:1100px; --space:16px;
 }
 
 /* ====== Base ====== */
-*{box-sizing:border-box}
-html,body{height:100%}
-html{scroll-behavior:smooth}
+*{box-sizing:border-box} html,body{height:100%} html{scroll-behavior:smooth}
 body{
-  margin:0;
-  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Inter", Segoe UI, Roboto, Arial;
+  margin:0; font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;
   color:var(--text);
   background:
-    radial-gradient(1000px 500px at 12% -10%, rgba(44,224,122,.08), transparent 60%),
-    radial-gradient(900px 600px at 88% 5%, rgba(44,224,122,.06), transparent 60%),
+    radial-gradient(1000px 500px at 12% -10%, rgba(47,224,123,.09), transparent 60%),
+    radial-gradient(900px 600px at 88% 5%, rgba(47,224,123,.06), transparent 60%),
     var(--bg);
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color:transparent;
 }
-
-.hidden{display:none!important}
-.muted{color:var(--muted)}
+.hidden{display:none!important} .muted{color:var(--muted)}
 
 /* ====== AppBar ====== */
 .appbar{
-  position:sticky; top:0; z-index:20;
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px;
-  padding:12px 16px env(safe-area-inset-right) 12px env(safe-area-inset-left);
-  background:linear-gradient(180deg, rgba(15,22,19,.9), rgba(15,22,19,.65));
-  backdrop-filter: blur(6px);
-  border-bottom:1px solid rgba(255,255,255,.06);
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:12px 16px;
+  background:linear-gradient(180deg, rgba(15,22,19,.92), rgba(15,22,19,.7));
+  backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.06);
 }
 h1{margin:0; font-weight:800; font-size:22px; letter-spacing:.2px}
 
@@ -62,33 +42,29 @@ h1{margin:0; font-weight:800; font-size:22px; letter-spacing:.2px}
 .spacer{flex:1}
 
 .card{
-  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-  border:1px solid rgba(255,255,255,.08);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding:14px;
-  margin-bottom:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:14px; margin-bottom:16px;
 }
 .card h2{margin:6px 0 12px}
 .card h3{margin:4px 0 10px}
 
 /* ====== Stats ====== */
-.stat{background:linear-gradient(180deg, var(--card), var(--card-2))}
-.stat h3{margin:0 0 8px; color:var(--muted)}
-.stat div{
-  font-size:28px; font-weight:800; letter-spacing:.2px;
-  color:#bff3d6; text-shadow: 0 1px 0 #0a0f0c;
-}
+.stat{background:linear-gradient(180deg,var(--card),var(--card-2))}
+.stat h3{margin:0 0 8px; color:var(--muted-2)}
+.stat div{font-size:28px; font-weight:800; color:#c8f7de; text-shadow:0 1px 0 #0a0f0c}
 
 /* ====== Toolbar ====== */
 .toolbar{display:flex; align-items:center; gap:12px; margin:8px 0 16px}
 input, select{
-  background:#0b1411; color:var(--text);
-  border:1px solid rgba(255,255,255,.14);
-  padding:10px 12px; border-radius:var(--radius-sm); outline:none; min-width:220px;
+  width:100%;
+  background:#0c1411; color:var(--text);
+  border:1px solid rgba(255,255,255,.18);
+  padding:10px 12px; border-radius:var(--r-sm); outline:none;
 }
-select{min-width: 180px}
-input::placeholder{color:#8fb19f}
+input::placeholder{color:#a9c7b7}
+label{color:#d9efe3; font-weight:600; display:flex; flex-direction:column; gap:6px; min-width:220px}
 
 /* ====== Buttons ====== */
 .btn{
@@ -98,103 +74,70 @@ input::placeholder{color:#8fb19f}
 }
 .btn:hover{transform:translateY(-1px); background:#1b2a24}
 .btn:active{transform:translateY(0)}
-.btn:focus-visible{outline:2px solid rgba(44,224,122,.5); outline-offset:2px}
-.btn.primary{
-  background:linear-gradient(135deg, var(--green), var(--green-2));
-  color:#05120b; font-weight:700;
-}
+.btn:focus-visible{outline:2px solid rgba(47,224,123,.5); outline-offset:2px}
+.btn.primary{background:linear-gradient(135deg,var(--green),var(--green-2)); color:#05120b; font-weight:700}
 .btn.danger{background:#2a1a1a}
-.btn.link{
-  background:transparent; color:#bff3d6; text-decoration:underline; box-shadow:none; padding:6px 8px
-}
+.btn.link{background:transparent; color:#bff3d6; text-decoration:underline; box-shadow:none; padding:6px 8px}
 
 /* ====== Tables ====== */
 .table-block .toggle-full{margin-top:8px}
 .table-wrap{width:100%; overflow:auto; border-radius:12px}
-.table-wrap.limited{max-height:330px; border:1px solid rgba(255,255,255,.06)}
-.table{
-  width:100%; border-collapse:separate; border-spacing:0;
-  background: linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.00));
-}
+.table-wrap.limited{max-height:330px; border:1px solid rgba(255,255,255,.07)}
+.table{width:100%; border-collapse:separate; border-spacing:0; background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.00))}
 .table thead th{
-  position:sticky; top:0; z-index:1;
-  background:#101814; color:#d2efe0;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  position:sticky; top:0; z-index:1; background:#101814; color:#e7f6ee;
+  border-bottom:1px solid rgba(255,255,255,.08)
 }
 .table th,.table td{padding:10px 12px}
 .table tbody tr{border-bottom:1px solid rgba(255,255,255,.06)}
 .table tbody tr:nth-child(even){background:#0d1713}
-.table tbody tr:hover{background:#13211b}
+.table tbody tr:hover{background:#14231c}
 .table .right{text-align:right}
 .mini-table th,.mini-table td{padding:8px 10px}
-
-/* scrollbars halus */
 .table-wrap::-webkit-scrollbar{height:10px; width:10px}
 .table-wrap::-webkit-scrollbar-thumb{background:#22342c; border-radius:10px}
 .table-wrap::-webkit-scrollbar-track{background:#0b1310}
 
 /* ====== Tabs ====== */
 .tabs{display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap}
-.tab{
-  background:#16231e; color:#cfeee0; border:1px solid rgba(255,255,255,.1);
-  padding:8px 12px; border-radius:10px; cursor:pointer; transition:.15s ease
-}
+.tab{background:#16231e; color:#d9f3e6; border:1px solid rgba(255,255,255,.1); padding:8px 12px; border-radius:10px; cursor:pointer}
 .tab:hover{background:#1a2a24}
-.tab.active{background:linear-gradient(135deg, #1d3a2b, #16281f); color:#fff}
+.tab.active{background:linear-gradient(135deg,#1c3a2b,#15291f); color:#fff}
 .tabpane{display:none}
 .tabpane.active{display:block}
 
 /* ====== Charts ====== */
 .chart-wrap{position:relative; height:280px}
-.nodata{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  color:var(--muted); font-weight:700; opacity:.95; pointer-events:none
-}
+.chart-wrap.tall{height:320px}
+.nodata{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#bcd6c8; font-weight:700; opacity:.95}
 .charts-grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:8px}
-.charts-3{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.mini-chart{
-  background:#0f1a16; border:1px solid rgba(255,255,255,.06);
-  border-radius:14px; padding:12px
-}
-.mini-title{font-weight:700; margin:2px 0 8px 0; color:#d9f3e6}
 
-/* ====== Dialog / Modal ====== */
+/* ====== Modal ====== */
 .modal{border:none; padding:0; background:transparent}
-.modal::backdrop{background:rgba(0,0,0,.55); backdrop-filter: blur(2px)}
+.modal::backdrop{background:rgba(0,0,0,.6); backdrop-filter: blur(10px)}
 .modal .card{
-  width:min(720px, 94vw); margin:0;
-  border-radius: 16px 16px 0 0; /* feel like bottom sheet in mobile */
+  width:min(760px, 96vw); margin:0;
+  border-radius:16px; background:#0f1714; /* solid agar teks kontras */
+  border:1px solid rgba(255,255,255,.14);
 }
-.modal .row{align-items:flex-end}
+.form-row label{flex:1; min-width:min(280px,100%)}
 
-/* ====== Utility ====== */
+/* ====== Misc ====== */
 .error{color:#ffb4b4; margin:6px 0 0}
-.calc-display{
-  width:100%; font-size:22px; padding:10px 12px; text-align:right;
-  background:#0c1512; border-radius:10px; border:1px solid rgba(255,255,255,.12)
-}
+.calc-display{width:100%; font-size:22px; padding:10px 12px; text-align:right; background:#0c1512; border-radius:10px; border:1px solid rgba(255,255,255,.12)}
 .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px}
-.calc-grid button{
-  padding:12px 10px; border-radius:12px;
-  background:#15221c; color:var(--text); border:1px solid rgba(255,255,255,.08)
-}
+.calc-grid button{padding:12px 10px; border-radius:12px; background:#15221c; color:var(--text); border:1px solid rgba(255,255,255,.08)}
 .calc-grid button.wide{grid-column: span 2}
 
 /* ====== Responsive ====== */
 @media (max-width: 820px){
-  .card{padding:14px}
-  .chart-wrap{height:240px}
+  .chart-wrap{height:240px} .chart-wrap.tall{height:280px}
 }
 @media (max-width: 640px){
   body{font-size:14.5px}
   .appbar h1{font-size:20px}
   .grid-3{grid-template-columns:1fr}
-  .toolbar{flex-wrap:wrap}
-  select, input{min-width:unset}
-  .chart-wrap{height:220px}
+  select,input{min-width:unset}
   .table-wrap.limited{max-height:300px}
-  .modal .card{width:96vw; border-radius:16px}
 }
-@media (prefers-reduced-motion: reduce){
-  *{transition: none !important; animation: none !important}
-  }
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
