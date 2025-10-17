@@ -91,31 +91,12 @@
           </div>
         </div>
 
-        <!-- 3 grafik dalam 1 ruangan -->
+        <!-- GRAFIK LINE GABUNGAN (In / Out / Saldo) -->
         <div class="card">
-          <h3>Ringkasan per Bulan (3 Grafik)</h3>
-          <div class="charts-3">
-            <div class="mini-chart">
-              <div class="mini-title">Pemasukan per Bulan</div>
-              <div class="chart-wrap">
-                <canvas id="chartMonthlyIn"></canvas>
-                <div class="nodata">Belum ada data</div>
-              </div>
-            </div>
-            <div class="mini-chart">
-              <div class="mini-title">Pengeluaran per Bulan</div>
-              <div class="chart-wrap">
-                <canvas id="chartMonthlyOut"></canvas>
-                <div class="nodata">Belum ada data</div>
-              </div>
-            </div>
-            <div class="mini-chart">
-              <div class="mini-title">Semua (In vs Out)</div>
-              <div class="chart-wrap">
-                <canvas id="chartMonthlyBoth"></canvas>
-                <div class="nodata">Belum ada data</div>
-              </div>
-            </div>
+          <h3>Tren Bulanan — Garis (Pemasukan, Pengeluaran, Saldo)</h3>
+          <div class="chart-wrap tall">
+            <canvas id="chartMonthlyLine"></canvas>
+            <div class="nodata">Belum ada data</div>
           </div>
         </div>
 
@@ -195,43 +176,40 @@
   <dialog id="modal-tx" class="modal">
     <form method="dialog" id="form-tx" class="card">
       <h3 id="modal-title">Tambah Transaksi Baru</h3>
-      <div class="row">
-        <label>Jenis:
+
+      <div class="row form-row">
+        <label>Jenis
           <select id="tx-type" required>
             <option>Pemasukan</option>
             <option>Pengeluaran</option>
           </select>
         </label>
-        <label>Keterangan:
+        <label>Keterangan
           <input id="tx-note" type="text" placeholder="contoh: Jual gabah">
         </label>
       </div>
-      <div class="row">
-        <label>Sektor:
+
+      <div class="row form-row">
+        <label>Sektor
           <input id="tx-sector" list="sector-list" placeholder="contoh: Pertanian / Perdagangan">
           <datalist id="sector-list">
-            <option value="Pertanian"></option>
-            <option value="Perdagangan"></option>
-            <option value="Transportasi"></option>
-            <option value="Telekomunikasi"></option>
-            <option value="Utilitas"></option>
-            <option value="Pendidikan"></option>
-            <option value="Kesehatan"></option>
-            <option value="Hiburan"></option>
-            <option value="Hunian"></option>
-            <option value="Jasa"></option>
-            <option value="Teknologi"></option>
-            <option value="Pemerintahan"></option>
+            <option value="Pertanian"></option><option value="Perdagangan"></option>
+            <option value="Transportasi"></option><option value="Telekomunikasi"></option>
+            <option value="Utilitas"></option><option value="Pendidikan"></option>
+            <option value="Kesehatan"></option><option value="Hiburan"></option>
+            <option value="Hunian"></option><option value="Jasa"></option>
+            <option value="Teknologi"></option><option value="Pemerintahan"></option>
             <option value="Lainnya"></option>
           </datalist>
         </label>
-        <label>Jumlah:
+        <label>Jumlah
           <input id="tx-amount" class="thousands" type="text" inputmode="numeric" placeholder="0">
         </label>
-        <label>Tanggal:
+        <label>Tanggal
           <input id="tx-date" type="date" required>
         </label>
       </div>
+
       <input id="tx-id" type="hidden">
       <div class="row end">
         <button type="button" id="btn-cancel" class="btn">Batal</button>
@@ -260,4 +238,4 @@
 
   <script src="script.js" defer></script>
 </body>
-                                                                                                                                         </html>
+        </html>
