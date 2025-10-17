@@ -1,48 +1,68 @@
-// api/login.js
-// Validasi PIN via ENV: ADMIN_PIN
+// login.js — validasi PIN via /api/login
+(function () {
+  const PIN_INPUT = document.getElementById('pin');
+  const BTN = document.getElementById('do-login');
 
-async function handler(req, res) {
-  // Health check (bisa dibuka di browser)
-  if (req.method === 'GET') {
-    const hasEnv = Boolean(process.env.ADMIN_PIN);
-    return res.status(200).json({ ok: true, envReady: hasEnv });
+  // area error (muncul di bawah form)
+  let ERR = document.getElementById('login-error');
+  if (!ERR) {
+    ERR = document.createElement('p');
+    ERR.id = 'login-error';
+    ERR.className = 'error';
+    ERR.hidden = true;
+    // sisipkan setelah baris tombol
+    const loginCard = document.getElementById('screen-login');
+    loginCard && loginCard.appendChild(ERR);
   }
+  const showErr = (m) => { ERR.textContent = m; ERR.hidden = false; };
+  const clearErr = () => { ERR.hidden = true; };
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+  async function postLogin(pin) {
+    // timeout supaya “tidak ada respon” tidak menggantung
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
 
-  // --- Ambil body secara robust ---
-  let body = {};
-  try {
-    if (req.body && typeof req.body === 'object') {
-      body = req.body;
-    } else if (typeof req.body === 'string') {
-      body = JSON.parse(req.body || '{}');
-    } else {
-      const chunks = [];
-      for await (const c of req) chunks.push(c);
-      const raw = Buffer.concat(chunks).toString('utf8');
-      body = raw ? JSON.parse(raw) : {};
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+      signal: ctrl.signal
+    }).catch((e) => { throw e; });
+
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      // tampilkan pesan spesifik dari server kalau ada
+      let j = {};
+      try { j = await res.json(); } catch {}
+      throw new Error(j.error || `Login gagal (HTTP ${res.status})`);
     }
-  } catch {
-    return res.status(400).json({ error: 'Invalid JSON body' });
+    return res.json();
   }
 
-  const { pin } = body;
-  const adminPin = process.env.ADMIN_PIN;
+  async function handleLogin() {
+    clearErr();
+    const pin = (PIN_INPUT?.value || '').trim();
+    if (!pin) return showErr('Masukkan PIN');
 
-  if (!adminPin) {
-    // ENV belum tersedia di runtime
-    return res.status(500).json({ error: 'ADMIN_PIN is not set on server' });
+    try {
+      const j = await postLogin(pin);
+      if (j && j.ok) {
+        // simpan sesi lokal seperti sebelumnya
+        localStorage.setItem('lapkeu_session', 'ok');
+        // refresh UI
+        location.reload();
+        return;
+      }
+      showErr('PIN salah');
+    } catch (e) {
+      if (e.name === 'AbortError') return showErr('Timeout koneksi. Coba lagi.');
+      showErr(e.message || 'Login gagal');
+    }
   }
 
-  const ok = String(pin ?? '').trim() === String(adminPin).trim();
-  if (ok) return res.status(200).json({ ok: true });
-
-  return res.status(401).json({ error: 'INVALID_PIN' });
-}
-
-// Ekspor untuk dua runtime (Vercel Functions & Next.js)
-module.exports = handler;
-export default handler;
+  BTN && BTN.addEventListener('click', handleLogin);
+  PIN_INPUT && PIN_INPUT.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+})();
