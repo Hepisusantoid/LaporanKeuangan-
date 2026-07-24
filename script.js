@@ -357,21 +357,41 @@ $('#bulk-delete')?.addEventListener('click', async () => {
   } catch (e) { toast(e.message, 'error'); }
   finally { hideLoading(); }
 });
-$('#bulk-sector')?.addEventListener('click', async () => {
+const dlgBulkSector = $('#modal-bulk-sector');
+$('#bulk-sector')?.addEventListener('click', () => {
   const ids = Array.from(selectedIds);
   if (ids.length === 0) return;
-  const name = prompt(`Ganti sektor untuk ${ids.length} transaksi terpilih menjadi:`);
-  if (name === null) return;
-  const trimmed = name.trim();
+  $('#bulk-sector-count-label').textContent = `${ids.length} transaksi terpilih`;
+  const sel = $('#bulk-sector-select');
+  sel.innerHTML = '';
+  allSectors().forEach((s) => sel.appendChild(el('option', { value: s, text: s })));
+  sel.appendChild(el('option', { value: '__NEW__', text: '+ Sektor baru...' }));
+  sel.value = allSectors()[0] || '__NEW__';
+  $('#bulk-sector-new').value = '';
+  toggleBulkSectorNewField();
+  dlgBulkSector.showModal();
+});
+$('#bulk-sector-select')?.addEventListener('change', toggleBulkSectorNewField);
+function toggleBulkSectorNewField() {
+  const isNew = $('#bulk-sector-select').value === '__NEW__';
+  $('#bulk-sector-new-wrap').classList.toggle('hidden', !isNew);
+}
+$('#bulk-sector-cancel')?.addEventListener('click', () => dlgBulkSector.close());
+$('#bulk-sector-apply')?.addEventListener('click', async () => {
+  const sel = $('#bulk-sector-select');
+  const name = sel.value === '__NEW__' ? $('#bulk-sector-new').value.trim() : sel.value;
+  if (!name) return toast('Nama sektor tidak boleh kosong', 'error');
+  const ids = Array.from(selectedIds);
+  dlgBulkSector.close();
   try {
     showLoading(`Memperbarui ${ids.length} transaksi...`);
     const byId = new Map(state.transactions.map((t) => [t.id, t]));
     for (const id of ids) {
       const t = byId.get(id);
       if (!t) continue;
-      await apiPut({ ...t, sector: trimmed });
+      await apiPut({ ...t, sector: name });
     }
-    if (trimmed) { try { await apiAddSector(trimmed); } catch {} }
+    try { await apiAddSector(name); } catch {}
     selectedIds.clear();
     await loadData();
     toast(`Sektor ${ids.length} transaksi diperbarui`);

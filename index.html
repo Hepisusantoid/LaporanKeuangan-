@@ -316,6 +316,28 @@
     </div>
   </dialog>
 
+  <!-- ===== MODAL: Ganti Sektor Massal ===== -->
+  <dialog id="modal-bulk-sector" class="modal">
+    <div class="card">
+      <h2>Ganti Sektor Terpilih</h2>
+      <p class="muted" id="bulk-sector-count-label"></p>
+      <div class="form-row">
+        <label>Pilih Sektor
+          <select id="bulk-sector-select">
+            <option value="__NEW__">+ Sektor baru...</option>
+          </select>
+        </label>
+        <label id="bulk-sector-new-wrap">Nama Sektor Baru
+          <input id="bulk-sector-new" placeholder="Ketik nama sektor baru">
+        </label>
+      </div>
+      <div class="row end" style="margin-top:10px">
+        <button id="bulk-sector-cancel" type="button" class="btn">Batal</button>
+        <button id="bulk-sector-apply" type="button" class="btn primary">Terapkan</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- ===== MODAL: Kalkulator ===== -->
   <dialog id="modal-calc" class="modal">
     <div class="card">
