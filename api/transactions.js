@@ -30,18 +30,20 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { list } = await loadList(base, headers);
-      return res.status(200).json({ transactions: list });
+      const { list, sectors } = await loadList(base, headers);
+      return res.status(200).json({ transactions: list, sectors });
     }
 
     // Ambil state untuk operasi tulis
-    const { list } = await loadList(base, headers);
+    const { list, sectors } = await loadList(base, headers);
 
     if (req.method === 'POST') {
       const body = await readJSON(req);
       const tx = sanitizeTx(body);
       list.push(tx); // tidak ada pembatasan saldo
-      await saveList(base, headers, list);
+      // sektor baru yang dipakai di transaksi otomatis ikut tercatat
+      const nextSectors = mergeSector(sectors, tx.sector);
+      await saveList(base, headers, list, nextSectors);
       return res.status(201).json({ ok: true, tx });
     }
 
@@ -60,7 +62,8 @@ export default async function handler(req, res) {
         sector: body?.sector ?? list[idx].sector ?? '' // jaga konsistensi
       };
       list[idx] = updated;
-      await saveList(base, headers, list);
+      const nextSectors = mergeSector(sectors, updated.sector);
+      await saveList(base, headers, list, nextSectors);
       return res.status(200).json({ ok: true, updated });
     }
 
@@ -69,7 +72,7 @@ export default async function handler(req, res) {
       if (!id) return res.status(400).json({ error: 'id required' });
       const next = list.filter(t => t.id !== id);
       if (next.length === list.length) return res.status(404).json({ error: 'not found' });
-      await saveList(base, headers, next);
+      await saveList(base, headers, next, sectors);
       return res.status(200).json({ ok: true });
     }
 
@@ -97,6 +100,12 @@ function sanitizeTx(body){
   };
 }
 function rid(){ return 'tx_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function mergeSector(sectors, name){
+  const n = String(name || '').trim();
+  if (!n) return sectors;
+  if (sectors.some(s => s.toLowerCase() === n.toLowerCase())) return sectors;
+  return [...sectors, n];
+}
 
 function extractList(record){
   if (Array.isArray(record?.transactions)) return record.transactions; // format baru
@@ -110,13 +119,15 @@ async function loadList(base, headers){
   const record = (j && typeof j === 'object' && 'record' in j) ? j.record : j;
   // normalisasi agar tiap item minimal punya field sector
   const list = extractList(record).map(t => ({ ...t, sector: t.sector ?? '' }));
-  return { list };
+  const sectors = Array.isArray(record?.sectors) ? record.sectors : [];
+  return { list, sectors };
 }
-async function saveList(base, headers, list){
-  // simpan konsisten sebagai { transactions:[...] }
+async function saveList(base, headers, list, sectors){
+  // simpan konsisten sebagai { transactions:[...], sectors:[...] }
+  // PENTING: sertakan sectors agar tidak hilang tertimpa (lihat api/sectors.js)
   const r = await fetch(base, {
-    method:'PUT', headers, body: JSON.stringify({ transactions: list })
+    method:'PUT', headers, body: JSON.stringify({ transactions: list, sectors: sectors || [] })
   });
   if (!r.ok) throw new Error(`PUT ${r.status}: ${await r.text()}`);
   return r.json();
-    }
+}
