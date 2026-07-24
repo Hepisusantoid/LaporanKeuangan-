@@ -95,6 +95,7 @@ function sanitizeTx(body){
     type: body?.type,                         // 'Pemasukan' | 'Pengeluaran'
     note: body?.note || '',
     sector: body?.sector || '',               // <<— sektor baru (opsional)
+    by: body?.by || '',                       // <<— dicatat oleh (opsional)
     amount: Number(body?.amount || 0),        // angka murni
     date: body?.date || new Date().toISOString().slice(0,10)
   };
