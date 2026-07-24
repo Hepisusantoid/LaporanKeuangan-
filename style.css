@@ -88,13 +88,14 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(33,223,122,.28
 .tbl-transactions .table tbody td:last-child{border-bottom:0; align-items:center}
 .tbl-transactions .table tbody td .btn{padding:8px 10px}
 .tbl-transactions .table tbody td .btn + .btn{margin-left:6px}
-/* label kolom transaksi */
-.tbl-transactions .table tbody td:nth-child(1)::before{content:"Tanggal"; color:var(--muted); font-weight:600}
-.tbl-transactions .table tbody td:nth-child(2)::before{content:"Keterangan"; color:var(--muted); font-weight:600}
-.tbl-transactions .table tbody td:nth-child(3)::before{content:"Sektor"; color:var(--muted); font-weight:600}
-.tbl-transactions .table tbody td:nth-child(4)::before{content:"Jenis"; color:var(--muted); font-weight:600}
-.tbl-transactions .table tbody td:nth-child(5)::before{content:"Jumlah"; color:var(--muted); font-weight:600}
-.tbl-transactions .table tbody td:nth-child(6)::before{content:"Aksi"; color:var(--muted); font-weight:600}
+/* label kolom transaksi (kolom 1 = checkbox, tanpa label) */
+.tbl-transactions .table tbody td:nth-child(1){justify-content:flex-start}
+.tbl-transactions .table tbody td:nth-child(2)::before{content:"Tanggal"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(3)::before{content:"Keterangan"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(4)::before{content:"Sektor"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(5)::before{content:"Jenis"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(6)::before{content:"Jumlah"; color:var(--muted); font-weight:600}
+.tbl-transactions .table tbody td:nth-child(7)::before{content:"Aksi"; color:var(--muted); font-weight:600}
 .tbl-transactions .table tbody td::before{margin-right:12px}
 
 /* Laporan Ringkas */
@@ -149,6 +150,34 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(33,223,122,.28
 
 /* Search */
 input[type="search"]::-webkit-search-cancel-button{filter:invert(1); opacity:.6}
+
+/* Icon header */
+.appbar h1{display:flex; align-items:center; gap:8px}
+.app-icon{width:28px; height:28px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,.35)}
+
+/* Checkbox */
+input[type="checkbox"]{width:auto; padding:0; accent-color:var(--primary); cursor:pointer}
+.tbl-transactions .table thead th:first-child, .tbl-transactions .table tbody td:first-child{width:36px}
+
+/* Tombol dengan spinner (loading saat simpan) */
+.btn-spinner{width:16px; height:16px; border:2px solid rgba(6,19,11,.35); border-top-color:#06130b; border-radius:50%; display:inline-block; animation:spin .7s linear infinite; margin-left:8px; vertical-align:middle}
+.btn.primary:disabled, .btn:disabled{opacity:.7; cursor:not-allowed; transform:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Overlay loading global (dipakai saat backup/restore/ekspor besar) */
+.loading-overlay{position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; background:rgba(4,8,6,.6); backdrop-filter:blur(4px)}
+.loading-box{display:flex; align-items:center; gap:10px; background:#0e1613; border:1px solid rgba(255,255,255,.14); border-radius:14px; padding:14px 18px; box-shadow:var(--shadow); color:var(--txt); font-weight:700}
+.loading-box .spinner{width:20px; height:20px; border:3px solid rgba(255,255,255,.18); border-top-color:var(--primary); border-radius:50%; display:inline-block; animation:spin .7s linear infinite}
+
+/* Toast (notifikasi ceklis / sukses / error) */
+.toast-container{position:fixed; left:0; right:0; bottom:14px; z-index:250; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none}
+.toast{max-width:92vw; padding:10px 16px; border-radius:12px; font-weight:700; box-shadow:var(--shadow);
+  background:#12241c; border:1px solid rgba(33,223,122,.4); color:#dffaea;
+  display:flex; align-items:center; gap:8px; opacity:0; transform:translateY(8px);
+  transition:opacity .25s ease, transform .25s ease}
+.toast.show{opacity:1; transform:translateY(0)}
+.toast.error{background:#2a1717; border-color:#3a2121; color:#ffdede}
+.toast .tick{display:inline-flex; width:18px; height:18px; border-radius:50%; background:var(--primary); color:#06130b; align-items:center; justify-content:center; font-size:12px; font-weight:900}
 
 /* Kalkulator */
 .calc-display{width:100%; font-size:22px; padding:10px 12px; text-align:right; background:#0b1310; border:1px solid rgba(255,255,255,.14); border-radius:12px}

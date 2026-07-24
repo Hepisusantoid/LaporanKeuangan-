@@ -4,14 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Laporan Keuangan</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <meta name="theme-color" content="#070b09">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <!-- Export libs -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
 </head>
 <body>
   <!-- Appbar -->
   <header class="appbar">
-    <h1>Laporan Keuangan</h1>
+    <h1><img src="favicon.svg" alt="" class="app-icon">Laporan Keuangan</h1>
     <div class="row">
       <button id="btn-login" class="btn">Masuk</button>
       <button id="btn-logout" class="btn">Keluar</button>
@@ -69,6 +76,33 @@
             <input id="search-box" type="search" placeholder="Cari keterangan atau sektor...">
           </label>
         </div>
+        <div class="row" style="gap:12px; margin-top:2px">
+          <label style="flex:1">Dari Tanggal
+            <input id="filter-date-from" type="date">
+          </label>
+          <label style="flex:1">Sampai Tanggal
+            <input id="filter-date-to" type="date">
+          </label>
+          <div class="row end" style="align-items:flex-end">
+            <button id="btn-clear-range" type="button" class="btn link">Reset rentang</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export & Backup -->
+      <div class="card">
+        <h3>Ekspor &amp; Cadangan</h3>
+        <div class="row" style="gap:8px">
+          <button id="export-csv" class="btn" type="button">⬇️ CSV</button>
+          <button id="export-xlsx" class="btn" type="button">⬇️ Excel</button>
+          <button id="export-pdf" class="btn" type="button">⬇️ PDF</button>
+        </div>
+        <div class="row" style="gap:8px; margin-top:8px">
+          <button id="backup-download" class="btn" type="button">💾 Unduh Backup (JSON)</button>
+          <button id="backup-upload-trigger" class="btn" type="button">📤 Pulihkan dari Backup</button>
+          <input id="backup-file" type="file" accept="application/json" class="hidden">
+        </div>
+        <p class="muted" style="margin:8px 0 0; font-size:13px">Ekspor mengikuti data yang sedang tampil (sesuai filter). Backup/Pulihkan berlaku untuk seluruh data.</p>
       </div>
 
       <div class="toolbar">
@@ -79,11 +113,17 @@
       <!-- Riwayat Transaksi -->
       <section class="card">
         <h2>Riwayat Transaksi</h2>
+        <div class="row" style="gap:8px; margin-bottom:8px">
+          <button id="bulk-delete" class="btn danger" type="button" disabled>🗑️ Hapus Terpilih</button>
+          <button id="bulk-sector" class="btn" type="button" disabled>🏷️ Ganti Sektor Terpilih</button>
+          <span id="bulk-count" class="muted"></span>
+        </div>
         <div class="table-block tbl-transactions">
           <div class="table-wrap limited">
             <table class="table" aria-label="Daftar Transaksi">
               <thead>
                 <tr>
+                  <th><input type="checkbox" id="select-all"></th>
                   <th>Tanggal</th>
                   <th>Keterangan</th>
                   <th>Sektor</th>
@@ -147,6 +187,14 @@
             <h3>Komposisi Sektor Pengeluaran</h3>
             <div class="chart-wrap">
               <canvas id="chartExpenseSector"></canvas>
+              <div class="nodata hidden">Belum ada data</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Tren Sektor per Bulan (Top 6)</h3>
+            <div class="chart-wrap tall">
+              <canvas id="chartSectorTrend"></canvas>
               <div class="nodata hidden">Belum ada data</div>
             </div>
           </div>
@@ -250,14 +298,19 @@
           <label>Tanggal
             <input id="tx-date" type="date">
           </label>
-          <div class="spacer"></div>
+          <label>Dicatat oleh <span class="muted">(opsional)</span>
+            <input id="tx-by" placeholder="nama pencatat">
+          </label>
         </div>
 
         <p id="form-error" class="error" hidden></p>
 
         <div class="row end" style="margin-top:10px">
           <button id="btn-cancel" type="button" class="btn">Batal</button>
-          <button class="btn primary" type="submit">Simpan</button>
+          <button id="btn-save" class="btn primary" type="submit">
+            <span class="btn-label">Simpan</span>
+            <span class="btn-spinner hidden"></span>
+          </button>
         </div>
       </form>
     </div>
@@ -281,8 +334,14 @@
     </div>
   </dialog>
 
+  <!-- Toast & Loading -->
+  <div id="toast-container" class="toast-container"></div>
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-box"><span class="spinner"></span><span id="loading-text">Memuat...</span></div>
+  </div>
+
   <!-- JS -->
-  <script src="login.js?v=4" defer></script>
-  <script src="script.js?v=4" defer></script>
+  <script src="login.js?v=5" defer></script>
+  <script src="script.js?v=5" defer></script>
 </body>
 </html>
