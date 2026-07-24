@@ -132,6 +132,24 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(33,223,122,.28
 /* Mini table (desktop guard) */
 .mini-table th,.mini-table td{padding:8px 10px}
 
+/* Combobox Sektor */
+.combobox{position:relative}
+.combobox-list{
+  position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:60;
+  max-height:220px; overflow:auto; border-radius:12px;
+  background:#0c1613; border:1px solid rgba(255,255,255,.16); box-shadow:var(--shadow);
+}
+.combobox-list .cb-item{
+  padding:10px 12px; cursor:pointer; color:var(--txt); border-bottom:1px dashed rgba(255,255,255,.06);
+}
+.combobox-list .cb-item:last-child{border-bottom:0}
+.combobox-list .cb-item:hover, .combobox-list .cb-item.active{background:rgba(33,223,122,.14)}
+.combobox-list .cb-empty{padding:10px 12px; color:var(--muted); font-style:italic}
+.combobox-list .cb-add{color:#bff3d8; font-weight:700}
+
+/* Search */
+input[type="search"]::-webkit-search-cancel-button{filter:invert(1); opacity:.6}
+
 /* Kalkulator */
 .calc-display{width:100%; font-size:22px; padding:10px 12px; text-align:right; background:#0b1310; border:1px solid rgba(255,255,255,.14); border-radius:12px}
 .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px}

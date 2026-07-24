@@ -58,6 +58,16 @@
               <option value="ALL">Semua Bulan</option>
             </select>
           </label>
+          <label style="flex:1">Filter Sektor
+            <select id="filter-sector">
+              <option value="ALL">Semua Sektor</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" style="gap:12px; margin-top:2px">
+          <label style="flex:1">Cari
+            <input id="search-box" type="search" placeholder="Cari keterangan atau sektor...">
+          </label>
         </div>
       </div>
 
@@ -225,7 +235,10 @@
 
         <div class="form-row">
           <label>Sektor
-            <input id="tx-sector" placeholder="contoh: Pertanian / Perdagangan">
+            <div class="combobox" id="sector-combobox">
+              <input id="tx-sector" autocomplete="off" placeholder="Ketik atau pilih sektor...">
+              <div id="sector-dropdown" class="combobox-list hidden"></div>
+            </div>
           </label>
           <label>Jumlah
             <input id="tx-amount" inputmode="numeric" placeholder="100.000">

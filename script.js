@@ -1,9 +1,11 @@
 /* =========================
    Laporan Keuangan – script.js (FULL)
-   - Penyimpanan via /api/transactions (JSONBin di server)
-   - Filter bulanan
+   - Penyimpanan via /api/transactions (JSONBin di server) + /api/sectors (sektor manual)
+   - Filter bulanan + filter sektor + pencarian (Keterangan/Sektor)
    - Tambah/Edit/Hapus transaksi (bebas minus: tidak blokir pengeluaran > saldo)
    - Input angka dengan pemisah ribuan (.)
+   - Sektor: combobox searchable, otomatis berisi sektor yang sudah terpakai
+     + sektor yang ditambahkan manual (tanpa transaksi)
    - Analitik & Diagram:
        * Saldo kumulatif (filter)
        * Bar bulanan (IN vs OUT)
@@ -11,18 +13,20 @@
        * Line gabungan (IN, OUT, Saldo)
        * Komposisi sektor (IN & OUT)
    - Laporan ringkas: harian, mingguan (ISO), bulanan, tahunan
-   - Tabel collapsible “Lihat penuh”
+   - Tabel collapsible "Lihat penuh"
    - Kalkulator: hapus per satuan (⌫), pemisah koma, tombol C
    ========================= */
 
 //// ---------- Konfigurasi ----------
 const API_TX = '/api/transactions';
-const LOGIN_API = '/api/login';
+const API_SECTORS = '/api/sectors';
 const SESSION_KEY = 'lapkeu_session';
 
 //// ---------- State ----------
-let state = { transactions: [] };
+let state = { transactions: [], sectors: [] };
 let currentMonthFilter = 'ALL';
+let currentSectorFilter = 'ALL';
+let currentSearch = '';
 
 //// ---------- Helpers ----------
 const $ = (s) => document.querySelector(s);
@@ -69,9 +73,11 @@ function attachThousandsMask(inp) {
     const before = inp.value.length;
     inp.value = formatThousandsInput(inp.value);
     const after = inp.value.length;
-    // perkiraan posisi kursor
     inp.selectionStart = inp.selectionEnd = Math.max(0, pos + (after - before));
   });
+}
+function norm(s) {
+  return String(s || '').toLowerCase().trim();
 }
 
 //// ---------- Auth UI (tanpa ubah alur login) ----------
@@ -79,15 +85,13 @@ function updateAuthUI() {
   const on = !!localStorage.getItem(SESSION_KEY);
   $('#screen-login')?.classList.toggle('hidden', on);
   $('#screen-app')?.classList.toggle('hidden', !on);
-  $('#btn-login') && ($('#btn-login').hidden = on);
-  $('#btn-logout') && ($('#btn-logout').hidden = !on);
+  if ($('#btn-login')) $('#btn-login').hidden = on;
+  if ($('#btn-logout')) $('#btn-logout').hidden = !on;
 }
 $('#btn-logout')?.addEventListener('click', () => {
   localStorage.removeItem(SESSION_KEY);
   updateAuthUI();
 });
-
-// (opsional) tombol “Masuk” hanya scroll ke kartu login
 $('#btn-login')?.addEventListener('click', () =>
   $('#screen-login')?.scrollIntoView({ behavior: 'smooth' })
 );
@@ -98,9 +102,9 @@ async function apiGet() {
   let j = {};
   try { j = await r.json(); } catch {}
   if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-  if (Array.isArray(j)) return { transactions: j };
-  if (Array.isArray(j?.transactions)) return j;
-  return { transactions: [] };
+  const transactions = Array.isArray(j) ? j : (Array.isArray(j?.transactions) ? j.transactions : []);
+  const sectors = Array.isArray(j?.sectors) ? j.sectors : [];
+  return { transactions, sectors };
 }
 async function apiPost(tx) {
   const r = await fetch(API_TX, {
@@ -132,6 +136,16 @@ async function apiDelete(id) {
   if (!r.ok) throw new Error(j.error || 'Gagal menghapus');
   return j;
 }
+async function apiAddSector(name) {
+  const r = await fetch(API_SECTORS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Gagal menambah sektor');
+  return j;
+}
 
 //// ---------- Data Utils ----------
 function computeSums(list) {
@@ -145,9 +159,6 @@ function listMonths(list) {
   const s = new Set(list.map((t) => monthKey(t.date)));
   return Array.from(s).filter(Boolean).sort().reverse();
 }
-function applyFilter(list) {
-  return currentMonthFilter === 'ALL' ? list : list.filter((t) => monthKey(t.date) === currentMonthFilter);
-}
 function toIndoMonth(ym) {
   const [y, m] = ym.split('-').map(Number);
   const id = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -155,28 +166,70 @@ function toIndoMonth(ym) {
 }
 const sectorLabel = (v) => (v && String(v).trim()) ? String(v).trim() : 'Tanpa Sektor';
 
+// Daftar sektor yang tersedia untuk dipilih: gabungan sektor yang sudah
+// terpakai di pencatatan + sektor yang ditambahkan manual (tanpa duplikat).
+function allSectors() {
+  const map = new Map(); // key: lowercase, value: nama asli
+  state.sectors.forEach((s) => {
+    const n = String(s || '').trim();
+    if (n) map.set(n.toLowerCase(), n);
+  });
+  state.transactions.forEach((t) => {
+    const n = String(t.sector || '').trim();
+    if (n) map.set(n.toLowerCase(), n);
+  });
+  return Array.from(map.values()).sort((a, b) => a.localeCompare(b, 'id'));
+}
+
+function applyFilter(list) {
+  let out = list;
+  if (currentMonthFilter !== 'ALL') out = out.filter((t) => monthKey(t.date) === currentMonthFilter);
+  if (currentSectorFilter !== 'ALL') out = out.filter((t) => sectorLabel(t.sector) === currentSectorFilter);
+  if (currentSearch) {
+    const q = norm(currentSearch);
+    out = out.filter((t) => norm(t.note).includes(q) || norm(sectorLabel(t.sector)).includes(q));
+  }
+  return out;
+}
+
 //// ---------- Render ----------
 function render() {
   const filtered = applyFilter(state.transactions).sort((a, b) => (a.date < b.date ? 1 : -1));
   const { sumIn, sumOut, balance } = computeSums(filtered);
-  $('#sum-in').textContent = fmtIDR(sumIn);
-  $('#sum-out').textContent = fmtIDR(sumOut);
-  $('#sum-balance').textContent = fmtIDR(balance);
+  if ($('#sum-in')) $('#sum-in').textContent = fmtIDR(sumIn);
+  if ($('#sum-out')) $('#sum-out').textContent = fmtIDR(sumOut);
+  if ($('#sum-balance')) $('#sum-balance').textContent = fmtIDR(balance);
 
   // bulan filter
-  const sel = $('#filter-month');
-  if (sel) {
+  const selMonth = $('#filter-month');
+  if (selMonth) {
     const months = listMonths(state.transactions);
-    sel.innerHTML = '';
-    sel.appendChild(el('option', { value: 'ALL', text: 'Semua Bulan' }));
-    months.forEach((m) => sel.appendChild(el('option', { value: m, text: toIndoMonth(m) })));
-    sel.value = currentMonthFilter;
+    selMonth.innerHTML = '';
+    selMonth.appendChild(el('option', { value: 'ALL', text: 'Semua Bulan' }));
+    months.forEach((m) => selMonth.appendChild(el('option', { value: m, text: toIndoMonth(m) })));
+    selMonth.value = currentMonthFilter;
+  }
+
+  // sektor filter
+  const selSector = $('#filter-sector');
+  if (selSector) {
+    const sectors = allSectors();
+    selSector.innerHTML = '';
+    selSector.appendChild(el('option', { value: 'ALL', text: 'Semua Sektor' }));
+    sectors.forEach((s) => selSector.appendChild(el('option', { value: s, text: s })));
+    selSector.value = sectors.includes(currentSectorFilter) ? currentSectorFilter : 'ALL';
+    if (selSector.value !== currentSectorFilter) currentSectorFilter = selSector.value;
   }
 
   // tabel transaksi
   const tbody = $('#tbody');
   if (tbody) {
     tbody.innerHTML = '';
+    if (filtered.length === 0) {
+      tbody.appendChild(
+        el('tr', {}, [el('td', { colspan: '6', class: 'muted', text: 'Tidak ada data yang cocok.' })])
+      );
+    }
     filtered.forEach((t) => {
       const tr = el('tr', {}, [
         el('td', { text: t.date }),
@@ -212,6 +265,88 @@ function smallDanger(txt, fn) {
   b.addEventListener('click', fn);
   return b;
 }
+
+//// ---------- Filter Bulan / Sektor / Search ----------
+$('#filter-month')?.addEventListener('change', (e) => {
+  currentMonthFilter = e.target.value;
+  render();
+});
+$('#filter-sector')?.addEventListener('change', (e) => {
+  currentSectorFilter = e.target.value;
+  render();
+});
+let searchDebounce;
+$('#search-box')?.addEventListener('input', (e) => {
+  clearTimeout(searchDebounce);
+  const val = e.target.value;
+  searchDebounce = setTimeout(() => {
+    currentSearch = val;
+    render();
+  }, 150);
+});
+
+//// ---------- Combobox Sektor ----------
+const sectorInput = $('#tx-sector');
+const sectorDropdown = $('#sector-dropdown');
+
+function renderSectorDropdown() {
+  if (!sectorDropdown) return;
+  const q = norm(sectorInput.value);
+  const all = allSectors();
+  const matches = q ? all.filter((s) => norm(s).includes(q)) : all;
+  sectorDropdown.innerHTML = '';
+
+  if (matches.length === 0) {
+    sectorDropdown.appendChild(el('div', { class: 'cb-empty', text: 'Belum ada sektor cocok' }));
+  } else {
+    matches.forEach((s) => {
+      const item = el('div', { class: 'cb-item', text: s });
+      item.addEventListener('mousedown', (ev) => {
+        ev.preventDefault(); // cegah blur sebelum klik terproses
+        sectorInput.value = s;
+        hideSectorDropdown();
+      });
+      sectorDropdown.appendChild(item);
+    });
+  }
+
+  // opsi tambah sektor baru jika teks yang diketik belum ada di daftar
+  const typed = sectorInput.value.trim();
+  const exists = all.some((s) => norm(s) === norm(typed));
+  if (typed && !exists) {
+    const addItem = el('div', { class: 'cb-item cb-add', text: `+ Tambah sektor "${typed}"` });
+    addItem.addEventListener('mousedown', async (ev) => {
+      ev.preventDefault();
+      try {
+        await apiAddSector(typed);
+      } catch (e) {
+        // gagal simpan ke server: tetap tampilkan secara lokal untuk sesi ini
+      }
+      state.sectors = addLocalSector(state.sectors, typed);
+      sectorInput.value = typed;
+      hideSectorDropdown();
+      render(); // supaya filter sektor & chart ikut update opsi baru
+    });
+    sectorDropdown.appendChild(addItem);
+  }
+
+  sectorDropdown.classList.remove('hidden');
+}
+function addLocalSector(list, name) {
+  const has = list.some((s) => norm(s) === norm(name));
+  return has ? list : [...list, name];
+}
+function hideSectorDropdown() {
+  sectorDropdown?.classList.add('hidden');
+}
+sectorInput?.addEventListener('focus', renderSectorDropdown);
+sectorInput?.addEventListener('input', renderSectorDropdown);
+sectorInput?.addEventListener('blur', () => {
+  setTimeout(hideSectorDropdown, 120); // beri jeda agar mousedown item sempat jalan
+});
+document.addEventListener('click', (e) => {
+  if (!$('#sector-combobox')?.contains(e.target)) hideSectorDropdown();
+});
 
 //// ---------- Modal Tambah/Edit ----------
 const dlg = $('#modal-tx');
@@ -301,12 +436,6 @@ document.querySelectorAll('.calc-grid button').forEach((b) => {
   else b.addEventListener('click', () => pushCalc(b.textContent));
 });
 
-//// ---------- Filter Bulan ----------
-$('#filter-month')?.addEventListener('change', (e) => {
-  currentMonthFilter = e.target.value;
-  render();
-});
-
 //// ---------- Tabs ----------
 function initTabs() {
   document.querySelectorAll('.tabs .tab').forEach((btn) => {
@@ -341,7 +470,6 @@ if (window.Chart) {
   Chart.defaults.color = '#eaf6ef';
   Chart.defaults.borderColor = 'rgba(255,255,255,.12)';
 }
-// bayangan halus
 const shadowPlugin = {
   id: 'shadow',
   beforeDatasetsDraw(c) {
@@ -592,7 +720,10 @@ function isoWeekKey(s) {
 async function loadData() {
   try {
     const data = await apiGet();
-    state = { transactions: Array.isArray(data.transactions) ? data.transactions : [] };
+    state = {
+      transactions: Array.isArray(data.transactions) ? data.transactions : [],
+      sectors: Array.isArray(data.sectors) ? data.sectors : [],
+    };
     render();
   } catch (e) {
     alert('Gagal mengambil data: ' + e.message);
